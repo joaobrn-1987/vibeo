@@ -55,8 +55,8 @@ export function DashboardHome({ user }: DashboardHomeProps) {
           </p>
         </div>
         {!user.todayCheckedIn && (
-          <Link href="/dashboard/check-in">
-            <Button size="lg">
+          <Link href="/dashboard/check-in" className="w-full sm:w-auto">
+            <Button size="lg" className="w-full sm:w-auto min-h-[48px]">
               <Calendar className="w-4 h-4" />
               Fazer check-in
             </Button>
@@ -130,7 +130,8 @@ export function DashboardHome({ user }: DashboardHomeProps) {
             </CardHeader>
             <CardContent>
               {user.chartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={200}>
+                <div className="h-44 sm:h-52">
+                <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={user.chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
                     <defs>
                       <linearGradient id="colorHumor" x1="0" y1="0" x2="0" y2="1">
@@ -149,6 +150,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
                     <Line type="monotone" dataKey="sono" stroke="#A8C4D4" strokeWidth={2} dot={{ r: 3, fill: "#A8C4D4" }} name="Sono" />
                   </AreaChart>
                 </ResponsiveContainer>
+                </div>
               ) : (
                 <div className="h-48 flex flex-col items-center justify-center text-center">
                   <Calendar className="w-10 h-10 text-foreground/20 mb-3" />

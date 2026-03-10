@@ -17,7 +17,7 @@ export function DashboardHeader({ user }: HeaderProps) {
         {/* Hamburger — mobile only */}
         <button
           onClick={toggle}
-          className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl hover:bg-cream-200 transition-colors"
+          className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-cream-200 transition-colors"
           aria-label="Abrir menu"
         >
           <Menu className="w-5 h-5 text-foreground/70" />

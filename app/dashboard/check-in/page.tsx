@@ -153,7 +153,7 @@ export default function CheckInPage() {
   if (riskDetected) {
     return (
       <div className="max-w-lg mx-auto">
-        <div className="bg-gradient-to-br from-primary-50 to-blue-50 rounded-3xl p-8 border border-primary-100 text-center">
+        <div className="bg-gradient-to-br from-primary-50 to-blue-50 rounded-3xl p-6 sm:p-8 border border-primary-100 text-center">
           <div className="w-16 h-16 rounded-2xl bg-primary-100 flex items-center justify-center mx-auto mb-5">
             <Heart className="w-8 h-8 text-primary-600" fill="currentColor" />
           </div>
@@ -164,18 +164,18 @@ export default function CheckInPage() {
             Percebemos que você está passando por um momento muito difícil. Queremos que saiba que nos importamos com você e que existem pessoas prontas para ajudar.
           </p>
           <div className="space-y-3 mb-6">
-            <a href="tel:188" className="flex items-center justify-center gap-3 w-full py-3.5 px-5 bg-white rounded-2xl border border-primary-200 font-semibold text-primary-700 hover:bg-primary-50 transition-colors">
+            <a href="tel:188" className="flex items-center justify-center gap-3 w-full min-h-[52px] py-3.5 px-5 bg-white rounded-2xl border border-primary-200 font-semibold text-primary-700 hover:bg-primary-50 transition-colors">
               📞 CVV – Centro de Valorização da Vida: <strong>188</strong>
             </a>
             <p className="text-xs text-primary-600">Gratuito, sigiloso, disponível 24 horas por dia</p>
-            <a href="tel:192" className="flex items-center justify-center gap-3 w-full py-3.5 px-5 bg-white rounded-2xl border border-primary-200 font-semibold text-primary-700 hover:bg-primary-50 transition-colors">
+            <a href="tel:192" className="flex items-center justify-center gap-3 w-full min-h-[52px] py-3.5 px-5 bg-white rounded-2xl border border-primary-200 font-semibold text-primary-700 hover:bg-primary-50 transition-colors">
               🚑 SAMU: <strong>192</strong>
             </a>
           </div>
           <p className="text-sm text-primary-600 mb-6">
             Por favor, converse com um adulto de confiança — um familiar, amigo próximo ou qualquer pessoa que possa estar presente com você agora.
           </p>
-          <Button onClick={() => router.push("/dashboard")} variant="outline" className="w-full">
+          <Button onClick={() => router.push("/dashboard")} variant="outline" className="w-full min-h-[48px]">
             Voltar ao início
           </Button>
         </div>
@@ -209,11 +209,11 @@ export default function CheckInPage() {
             <Alert variant="safety" title="Precisa de apoio?" description="Se sentir que precisa conversar com alguém, o CVV atende gratuitamente pelo 188, 24h por dia." className="mb-6 text-left" />
           )}
 
-          <div className="flex gap-3">
-            <Button onClick={() => router.push("/dashboard")} variant="outline" className="flex-1">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button onClick={() => router.push("/dashboard")} variant="outline" className="flex-1 min-h-[48px]">
               Ir ao início
             </Button>
-            <Button onClick={() => router.push("/dashboard/historico")} className="flex-1">
+            <Button onClick={() => router.push("/dashboard/historico")} className="flex-1 min-h-[48px]">
               Ver histórico
             </Button>
           </div>
@@ -238,7 +238,7 @@ export default function CheckInPage() {
       </div>
 
       <Card>
-        <CardContent className="p-5 sm:p-8">
+        <CardContent className="p-4 sm:p-8">
           {/* Category */}
           <div className="flex items-center gap-2 mb-6">
             <span className="text-3xl">{question.emoji}</span>
@@ -288,14 +288,14 @@ export default function CheckInPage() {
 
           {/* Choice input */}
           {question.type === "choice" && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {question.options?.map((opt) => {
                 const isSelected = answers[question.id] === opt.value
                 return (
                   <button
                     key={opt.value}
                     onClick={() => handleAnswer(opt.value)}
-                    className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all duration-150 text-left ${
+                    className={`flex items-center gap-3 p-4 min-h-[72px] rounded-2xl border-2 transition-all duration-150 text-left ${
                       isSelected
                         ? "border-primary-400 bg-primary-50 shadow-soft"
                         : "border-cream-200 bg-white hover:border-primary-200 hover:bg-cream-50"
@@ -354,12 +354,13 @@ export default function CheckInPage() {
       </Card>
 
       {/* Navigation */}
-      <div className="flex justify-between mt-4">
+      <div className="flex justify-between items-center mt-4">
         <Button
           variant="ghost"
           onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
           disabled={currentStep === 0}
           size="sm"
+          className="min-h-[44px] min-w-[44px]"
         >
           <ChevronLeft className="w-4 h-4" />
           Anterior

@@ -11,18 +11,15 @@ const themes = [
     label: "Feminino",
     description: "Tons de rosa e aconchegantes",
     style: { background: "linear-gradient(135deg, #C4717A, #e8a0a7)" },
-    textColor: "#8B3D45",
-    bgPreview: "#FDF0F1",
-    accentPreview: "#C4717A",
+    // Button color when this theme is selected
+    btnStyle: { background: "#C4717A", color: "#fff", boxShadow: "0 4px 24px rgba(196,113,122,0.35)" },
   },
   {
     value: "MASCULINE",
     label: "Masculino",
     description: "Azul marinho sólido e direto",
     style: { background: "#1B3A5C" },
-    textColor: "#1B3A5C",
-    bgPreview: "#E8EFF6",
-    accentPreview: "#1B3A5C",
+    btnStyle: { background: "#1B3A5C", color: "#fff", boxShadow: "0 4px 24px rgba(27,58,92,0.35)" },
   },
   {
     value: "DIVERSITY",
@@ -31,9 +28,11 @@ const themes = [
     style: {
       background: "linear-gradient(135deg, #E40303 0%, #FF8C00 20%, #FFED00 40%, #008026 60%, #004DFF 80%, #750787 100%)",
     },
-    textColor: "#750787",
-    bgPreview: "#FDF4FF",
-    accentPreview: "linear-gradient(90deg, #E40303, #FF8C00, #FFED00, #008026, #004DFF, #750787)",
+    btnStyle: {
+      background: "linear-gradient(90deg, #E40303, #FF8C00, #FFED00, #008026, #004DFF, #750787)",
+      color: "#fff",
+      boxShadow: "0 4px 24px rgba(117,7,135,0.30)",
+    },
   },
 ]
 
@@ -141,8 +140,8 @@ export default function BemVindoPage() {
           disabled={!selected || saving}
           style={
             selected && !saving
-              ? { background: "#4A6FA5", color: "#fff", boxShadow: "0 4px 24px rgba(74,111,165,0.25)" }
-              : { background: "#EDE3D5", color: "#bbb", cursor: "not-allowed" }
+              ? (themes.find(t => t.value === selected)?.btnStyle ?? { background: "#4A6FA5", color: "#fff" })
+              : { background: "#EDE3D5", color: "#aaa", cursor: "not-allowed" }
           }
           className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all duration-200"
         >

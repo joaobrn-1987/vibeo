@@ -37,10 +37,10 @@ export function DashboardSidebar({ user }: SidebarProps) {
         {/* Close button — mobile only */}
         <button
           onClick={close}
-          className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg hover:bg-cream-200 transition-colors"
+          className="lg:hidden w-11 h-11 flex items-center justify-center rounded-lg hover:bg-cream-200 transition-colors"
           aria-label="Fechar menu"
         >
-          <X className="w-4 h-4 text-foreground/60" />
+          <X className="w-5 h-5 text-foreground/60" />
         </button>
       </div>
 
