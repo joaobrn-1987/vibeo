@@ -9,9 +9,26 @@ import { formatDate } from "@/lib/utils"
 import { signOut, useSession } from "next-auth/react"
 
 const themes = [
-  { value: "FEMININE", label: "Feminino", emoji: "🌸", gradient: "from-accent-400 to-accent-600" },
-  { value: "MASCULINE", label: "Masculino", emoji: "🌊", gradient: "from-primary-500 to-primary-700" },
-  { value: "DIVERSITY", label: "Diversidade", emoji: "🌈", gradient: "from-purple-500 to-teal-500" },
+  {
+    value: "FEMININE",
+    label: "Feminino",
+    emoji: "🌸",
+    style: { background: "linear-gradient(135deg, #C4717A, #e8a0a7)" },
+  },
+  {
+    value: "MASCULINE",
+    label: "Masculino",
+    emoji: "🌊",
+    style: { background: "#1B3A5C" },
+  },
+  {
+    value: "DIVERSITY",
+    label: "LGBT+",
+    emoji: "🏳️‍🌈",
+    style: {
+      background: "linear-gradient(135deg, #E40303 0%, #FF8C00 20%, #FFED00 40%, #008026 60%, #004DFF 80%, #750787 100%)",
+    },
+  },
 ]
 
 interface ProfileClientProps {
@@ -129,7 +146,7 @@ export function ProfileClient({ user }: ProfileClientProps) {
                     : "border-cream-200 bg-white hover:border-primary-200"
                 } disabled:opacity-60 disabled:cursor-not-allowed`}
               >
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center text-2xl`}>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={theme.style}>
                   {theme.emoji}
                 </div>
                 <span className="text-xs font-semibold text-foreground">{theme.label}</span>

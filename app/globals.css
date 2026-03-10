@@ -162,54 +162,85 @@
     background: linear-gradient(135deg, #C4717A 0%, #4A6FA5 100%);
   }
 
-  /* === THEME: MASCULINE (deep blue) === */
+  /* === THEME: MASCULINE (navy sólido, sem degradê) === */
+  /* Cor primária: azul marinho #1B3A5C — sólido, direto, sem gradiente */
   [data-theme="MASCULINE"] {
-    --brand-blue: #2E5F8A;
-    --brand-blue-light: #6A9BBF;
-    --ring: 210 50% 35%;
+    --brand-blue: #1B3A5C;
+    --brand-blue-light: #1B3A5C;
+    --ring: 210 55% 24%;
   }
   [data-theme="MASCULINE"] .btn-primary,
   [data-theme="MASCULINE"] [class*="bg-primary-500"],
   [data-theme="MASCULINE"] [class*="bg-primary-600"] {
-    background-color: #2E5F8A !important;
+    background-color: #1B3A5C !important;
+    background-image: none !important;
   }
-  [data-theme="MASCULINE"] [class*="bg-primary-50"] { background-color: #EBF1F8 !important; }
-  [data-theme="MASCULINE"] [class*="bg-primary-100"] { background-color: #D4E4F2 !important; }
+  [data-theme="MASCULINE"] [class*="bg-primary-400"] { background-color: #244972 !important; }
+  [data-theme="MASCULINE"] [class*="bg-primary-50"]  { background-color: #E8EFF6 !important; }
+  [data-theme="MASCULINE"] [class*="bg-primary-100"] { background-color: #CCDAEB !important; }
   [data-theme="MASCULINE"] [class*="text-primary-500"],
-  [data-theme="MASCULINE"] [class*="text-primary-600"] { color: #2E5F8A !important; }
-  [data-theme="MASCULINE"] [class*="text-primary-700"] { color: #1A3A5C !important; }
-  [data-theme="MASCULINE"] [class*="border-primary-"] { border-color: #2E5F8A !important; }
-  [data-theme="MASCULINE"] [class*="from-primary-"] { --tw-gradient-from: #2E5F8A !important; }
-  [data-theme="MASCULINE"] [class*="to-primary-"] { --tw-gradient-to: #1A3A5C !important; }
-  [data-theme="MASCULINE"] .theme-primary { color: #2E5F8A; }
-  [data-theme="MASCULINE"] .theme-bg { background-color: #EBF1F8; }
-  [data-theme="MASCULINE"] .theme-gradient {
-    background: linear-gradient(135deg, #2E5F8A 0%, #1A3A5C 100%);
-  }
+  [data-theme="MASCULINE"] [class*="text-primary-600"] { color: #1B3A5C !important; }
+  [data-theme="MASCULINE"] [class*="text-primary-400"] { color: #244972 !important; }
+  [data-theme="MASCULINE"] [class*="text-primary-700"] { color: #0E1E30 !important; }
+  [data-theme="MASCULINE"] [class*="border-primary-"] { border-color: #1B3A5C !important; }
+  /* Sem gradiente — mesmo começo e fim */
+  [data-theme="MASCULINE"] [class*="from-primary-"] { --tw-gradient-from: #1B3A5C !important; }
+  [data-theme="MASCULINE"] [class*="to-primary-"]   { --tw-gradient-to:   #1B3A5C !important; }
+  [data-theme="MASCULINE"] [class*="via-primary-"]  { --tw-gradient-via:  #1B3A5C !important; }
+  /* Background geral do dashboard */
+  [data-theme="MASCULINE"] { background-color: #F0F4F8; }
+  [data-theme="MASCULINE"] .theme-primary { color: #1B3A5C; }
+  [data-theme="MASCULINE"] .theme-bg      { background-color: #E8EFF6; }
+  [data-theme="MASCULINE"] .theme-gradient { background: #1B3A5C; }
 
-  /* === THEME: DIVERSITY (purple/teal) === */
+  /* === THEME: DIVERSITY (LGBT+ — cores da bandeira arco-íris) === */
+  /* Vermelho #E40303 | Laranja #FF8C00 | Amarelo #FFED00 | Verde #008026 | Azul #004DFF | Violeta #750787 */
   [data-theme="DIVERSITY"] {
-    --brand-blue: #7B5EA7;
-    --brand-blue-light: #4A9B8E;
-    --ring: 270 30% 50%;
+    --brand-blue: #750787;
+    --brand-blue-light: #004DFF;
+    --ring: 288 92% 27%;
   }
+  /* Botões com gradiente arco-íris */
   [data-theme="DIVERSITY"] .btn-primary,
   [data-theme="DIVERSITY"] [class*="bg-primary-500"],
   [data-theme="DIVERSITY"] [class*="bg-primary-600"] {
-    background-color: #7B5EA7 !important;
+    background: linear-gradient(90deg, #E40303, #FF8C00, #FFED00, #008026, #004DFF, #750787) !important;
+    color: #fff !important;
+    border: none !important;
   }
-  [data-theme="DIVERSITY"] [class*="bg-primary-50"] { background-color: #F3EFF8 !important; }
-  [data-theme="DIVERSITY"] [class*="bg-primary-100"] { background-color: #E4DCF0 !important; }
+  [data-theme="DIVERSITY"] [class*="bg-primary-50"]  { background-color: #FDF4FF !important; }
+  [data-theme="DIVERSITY"] [class*="bg-primary-100"] { background-color: #F0D9FF !important; }
+  /* Texto usa violeta como cor base */
   [data-theme="DIVERSITY"] [class*="text-primary-500"],
-  [data-theme="DIVERSITY"] [class*="text-primary-600"] { color: #7B5EA7 !important; }
-  [data-theme="DIVERSITY"] [class*="text-primary-700"] { color: #5a3f85 !important; }
-  [data-theme="DIVERSITY"] [class*="border-primary-"] { border-color: #7B5EA7 !important; }
-  [data-theme="DIVERSITY"] [class*="from-primary-"] { --tw-gradient-from: #7B5EA7 !important; }
-  [data-theme="DIVERSITY"] [class*="to-primary-"] { --tw-gradient-to: #4A9B8E !important; }
-  [data-theme="DIVERSITY"] .theme-primary { color: #7B5EA7; }
-  [data-theme="DIVERSITY"] .theme-bg { background-color: #F3EFF8; }
+  [data-theme="DIVERSITY"] [class*="text-primary-600"] { color: #750787 !important; }
+  [data-theme="DIVERSITY"] [class*="text-primary-700"] { color: #50045D !important; }
+  [data-theme="DIVERSITY"] [class*="text-primary-400"] { color: #9B1FBB !important; }
+  /* Bordas com gradiente arco-íris via outline trick */
+  [data-theme="DIVERSITY"] [class*="border-primary-"] {
+    border-color: #750787 !important;
+  }
+  /* Gradiente para elementos decorativos */
+  [data-theme="DIVERSITY"] [class*="from-primary-"] { --tw-gradient-from: #E40303 !important; }
+  [data-theme="DIVERSITY"] [class*="to-primary-"]   { --tw-gradient-to:   #750787 !important; }
+  [data-theme="DIVERSITY"] [class*="via-primary-"]  { --tw-gradient-via:  #008026 !important; }
+  /* Avatares e ícones com gradiente arco-íris */
+  [data-theme="DIVERSITY"] [class*="from-primary-"][class*="to-accent-"],
+  [data-theme="DIVERSITY"] [class*="from-primary-"][class*="to-primary-"] {
+    background: linear-gradient(135deg, #E40303, #FF8C00, #FFED00, #008026, #004DFF, #750787) !important;
+  }
+  /* Faixa arco-íris no topo da sidebar/dashboard */
+  [data-theme="DIVERSITY"] .dashboard-sidebar::before,
+  [data-theme="DIVERSITY"] .admin-sidebar::before {
+    content: '';
+    display: block;
+    height: 4px;
+    background: linear-gradient(90deg, #E40303, #FF8C00, #FFED00, #008026, #004DFF, #750787);
+    width: 100%;
+  }
+  [data-theme="DIVERSITY"] .theme-primary { color: #750787; }
+  [data-theme="DIVERSITY"] .theme-bg      { background-color: #FDF4FF; }
   [data-theme="DIVERSITY"] .theme-gradient {
-    background: linear-gradient(135deg, #7B5EA7 0%, #4A9B8E 100%);
+    background: linear-gradient(90deg, #E40303, #FF8C00, #FFED00, #008026, #004DFF, #750787);
   }
 
   /* Scrollbar styling */
