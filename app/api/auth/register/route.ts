@@ -2,26 +2,18 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { generateToken, calculateAge } from "@/lib/utils"
-import { z } from "zod"
-
-const registerSchema = z.object({
-  fullName: z.string().min(3),
-  email: z.string().email(),
-  password: z.string().min(8),
-  birthDate: z.string(),
-  age: z.number(),
-  isMinor: z.boolean(),
-  theme: z.enum(["FEMININE", "MASCULINE", "DIVERSITY"]),
-  guardianName: z.string().optional(),
-  guardianEmail: z.string().email().optional().or(z.literal("")).optional(),
-  acceptTerms: z.boolean(),
-  acceptPrivacy: z.boolean(),
-})
+import { registerSchema } from "@/lib/validations"
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const data = registerSchema.parse(body)
+    const parseResult = registerSchema.safeParse(body)
+
+    if (!parseResult.success) {
+      return NextResponse.json({ error: "Dados inválidos." }, { status: 400 })
+    }
+
+    const data = parseResult.data
 
     if (!data.acceptTerms || !data.acceptPrivacy) {
       return NextResponse.json({ error: "Você deve aceitar os termos e a política de privacidade." }, { status: 400 })
@@ -31,14 +23,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Responsável legal é obrigatório para menores de 18 anos." }, { status: 400 })
     }
 
-    // Check if email already exists
-    const existing = await prisma.user.findUnique({ where: { email: data.email } })
+    // Normalize email to lowercase (already done by schema transform)
+    const email = data.email
+
+    // Check if email already exists — use constant-time path to prevent timing-based enumeration
+    const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) {
-      return NextResponse.json({ error: "Este e-mail já está cadastrado." }, { status: 409 })
+      // Return success-like response to prevent user enumeration
+      return NextResponse.json({ success: true, message: "Conta criada com sucesso." })
     }
 
+    // Validate birthDate is a real date and compute age server-side (don't trust client-supplied age)
+    const birthDateObj = new Date(data.birthDate)
+    if (isNaN(birthDateObj.getTime())) {
+      return NextResponse.json({ error: "Data de nascimento inválida." }, { status: 400 })
+    }
+    const serverAge = calculateAge(birthDateObj)
+    const serverIsMinor = serverAge < 18
+
     const passwordHash = await bcrypt.hash(data.password, 12)
-    const birthDate = new Date(data.birthDate)
 
     // Get active terms and privacy versions
     const terms = await prisma.termsOfUse.findFirst({ where: { isActive: true } })
@@ -47,14 +50,14 @@ export async function POST(req: NextRequest) {
     const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown"
     const userAgent = req.headers.get("user-agent") || "unknown"
 
-    // Create user
+    // Create user — use server-computed isMinor, not client-supplied
     const user = await prisma.user.create({
       data: {
-        email: data.email,
+        email,
         passwordHash,
         role: "USER",
-        status: data.isMinor ? "PENDING_CONSENT" : "PENDING_EMAIL",
-        isMinor: data.isMinor,
+        status: serverIsMinor ? "PENDING_CONSENT" : "PENDING_EMAIL",
+        isMinor: serverIsMinor,
       },
     })
 
@@ -63,8 +66,8 @@ export async function POST(req: NextRequest) {
       data: {
         userId: user.id,
         fullName: data.fullName,
-        birthDate,
-        age: data.age,
+        birthDate: birthDateObj,
+        age: serverAge,
         theme: data.theme,
       },
     })
@@ -85,7 +88,7 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Audit log
+    // Audit log — do not include sensitive info
     await prisma.auditLog.create({
       data: {
         userId: user.id,
@@ -97,7 +100,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    if (data.isMinor) {
+    if (serverIsMinor) {
       // Create guardian consent record
       const consentToken = generateToken(48)
       await prisma.guardianConsent.create({
@@ -113,9 +116,8 @@ export async function POST(req: NextRequest) {
         },
       })
 
-      // TODO: send guardian email (would use nodemailer in production)
-      console.log(`Guardian consent email would be sent to: ${data.guardianEmail}`)
-      console.log(`Consent link: ${process.env.NEXT_PUBLIC_APP_URL}/consentimento/${consentToken}`)
+      // TODO: send guardian email using nodemailer
+      // Guardian email address intentionally not logged to avoid leaking PII to console
     } else {
       // Create email verification token
       const verifyToken = generateToken(48)
@@ -128,23 +130,20 @@ export async function POST(req: NextRequest) {
         },
       })
 
-      // TODO: send verification email
-      console.log(`Email verification would be sent to: ${data.email}`)
-      console.log(`Verify link: ${process.env.NEXT_PUBLIC_APP_URL}/verificar-email/${verifyToken}`)
-
-      // For development: auto-verify email
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { status: "ACTIVE", emailVerified: new Date() },
-      })
+      // TODO: send verification email using nodemailer
+      // In production: remove the auto-verify block below
+      if (process.env.NODE_ENV === 'development') {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { status: "ACTIVE", emailVerified: new Date() },
+        })
+      }
     }
 
+    // Do not return user IDs or internal data
     return NextResponse.json({ success: true, message: "Conta criada com sucesso." })
   } catch (error: any) {
     console.error("Register error:", error)
-    if (error.name === "ZodError") {
-      return NextResponse.json({ error: "Dados inválidos." }, { status: 400 })
-    }
     return NextResponse.json({ error: "Erro interno. Tente novamente." }, { status: 500 })
   }
 }

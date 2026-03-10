@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { format, formatDistanceToNow, differenceInYears } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import crypto from "crypto"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -26,12 +27,9 @@ export function formatRelative(date: Date | string): string {
 }
 
 export function generateToken(length: number = 32): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  let result = ''
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return result
+  // Use cryptographically secure random bytes, encode as hex
+  // Each byte becomes 2 hex chars, so we need length/2 bytes to get `length` hex chars
+  return crypto.randomBytes(Math.ceil(length / 2)).toString('hex').slice(0, length)
 }
 
 export function getRiskLevelLabel(level: string): string {

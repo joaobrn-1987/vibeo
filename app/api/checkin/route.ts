@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { checkInSchema } from "@/lib/validations"
 
 const RISK_KEYWORDS = [
   "suicídio", "suicidio", "me matar", "matar", "acabar com tudo",
@@ -57,12 +58,22 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions)
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-    const data = await req.json()
+    const body = await req.json()
+    const parseResult = checkInSchema.safeParse(body)
+
+    if (!parseResult.success) {
+      return NextResponse.json({ error: "Dados inválidos." }, { status: 400 })
+    }
+
+    // Use validated and sanitized data only — ignore any userId from request body
+    // The check-in is always created for the authenticated user (session.user.id)
+    const data = parseResult.data
+
     const { level, score, flags } = calculateRiskLevel(data)
 
     const checkIn = await prisma.emotionalCheckIn.create({
       data: {
-        userId: session.user.id,
+        userId: session.user.id,  // Always use session ID, never trust body
         isComplete: true,
         completedAt: new Date(),
         overallMood: data.overallMood,
@@ -71,7 +82,7 @@ export async function POST(req: NextRequest) {
         sleepQuality: data.sleepQuality,
         motivation: data.motivation,
         dominantFeeling: data.dominantFeeling,
-        freeText: data.freeText,
+        freeText: data.freeText,  // Already HTML-stripped by freeTextSchema transform
         riskLevel: level as any,
         riskFlags: flags,
         internalScore: score,
@@ -121,7 +132,7 @@ export async function POST(req: NextRequest) {
             profileId: profile.id,
             alertType: level === "IMMEDIATE_PRIORITY" ? "RISK_IMMEDIATE" : "RISK_ELEVATED",
             riskLevel: level as any,
-            message: `Alerta de risco detectado. Score: ${score}. Sinais: ${flags.join(", ")}.`,
+            message: `Alerta de risco detectado. Sinais: ${flags.join(", ")}.`,
             triggeredBy: checkIn.id,
           },
         })
@@ -133,8 +144,8 @@ export async function POST(req: NextRequest) {
           userId: session.user.id,
           eventType: "RISK_DETECTED",
           severity: level === "IMMEDIATE_PRIORITY" ? "critical" : "high",
-          description: `Risk level ${level} detected during check-in. Flags: ${flags.join(", ")}`,
-          metadata: { checkInId: checkIn.id, score, flags },
+          description: `Risk level ${level} detected during check-in.`,
+          metadata: { checkInId: checkIn.id, flags },
         },
       })
     }
@@ -146,10 +157,11 @@ export async function POST(req: NextRequest) {
         action: "CHECKIN_COMPLETED",
         resource: "emotional_checkins",
         resourceId: checkIn.id,
-        details: { riskLevel: level, score },
+        details: { riskLevel: level },
       },
     })
 
+    // Return only safe, user-facing data — do not expose internal score
     return NextResponse.json({ success: true, riskLevel: level, checkInId: checkIn.id })
   } catch (error) {
     console.error("Check-in error:", error)
