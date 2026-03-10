@@ -23,7 +23,7 @@ export function ConsentForm({ token, minorName }: Props) {
         body: JSON.stringify({ token, action }),
       })
       if (res.ok) {
-        setDone(action)
+        setDone(action === "approve" ? "approved" : "denied")
         if (action === "approve") {
           setTimeout(() => router.push("/login?consent=approved"), 3000)
         }

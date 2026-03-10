@@ -1,0 +1,22 @@
+module.exports = {
+  apps: [
+    {
+      name: 'vibeo',
+      script: 'node_modules/.bin/next',
+      args: 'start',
+      cwd: '/opt/vibeo',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3000,
+      },
+      env_file: '/opt/vibeo/.env',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss',
+      out_file: '/var/log/pm2/vibeo-out.log',
+      error_file: '/var/log/pm2/vibeo-error.log',
+    },
+  ],
+}
