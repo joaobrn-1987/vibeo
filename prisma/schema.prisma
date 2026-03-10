@@ -1,0 +1,571 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  GUARDIAN
+  ADMIN
+  MASTER_ADMIN
+}
+
+enum UserStatus {
+  PENDING_EMAIL
+  PENDING_CONSENT
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum ThemeChoice {
+  FEMININE
+  MASCULINE
+  DIVERSITY
+}
+
+enum RiskLevel {
+  STABLE
+  ATTENTION
+  HIGH_RISK
+  IMMEDIATE_PRIORITY
+}
+
+enum ConsentStatus {
+  PENDING
+  APPROVED
+  REVOKED
+  EXPIRED
+}
+
+enum AlertType {
+  RISK_ELEVATED
+  RISK_IMMEDIATE
+  INACTIVITY
+  PATTERN_CHANGE
+  GUARDIAN_NOTIFICATION
+}
+
+model User {
+  id                String      @id @default(cuid())
+  email             String      @unique
+  emailVerified     DateTime?
+  passwordHash      String
+  role              UserRole    @default(USER)
+  status            UserStatus  @default(PENDING_EMAIL)
+  isMinor           Boolean     @default(false)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  lastLoginAt       DateTime?
+  lastActiveAt      DateTime?
+  deletedAt         DateTime?
+  anonymizedAt      DateTime?
+
+  profile           Profile?
+  sessions          Session[]
+  accounts          Account[]
+  verificationTokens VerificationToken[]
+  passwordResets    PasswordReset[]
+
+  // If minor, guardian relationship
+  guardianConsent   GuardianConsent?  @relation("MinorUser")
+  guardianOf        GuardianConsent[] @relation("GuardianUser")
+
+  // Emotional data
+  checkIns          EmotionalCheckIn[]
+  aiSessions        AISession[]
+  aiMemory          AIMemory[]
+
+  // Privacy
+  consentLogs       ConsentLog[]
+  dataExportRequests DataExportRequest[]
+
+  // Admin
+  auditLogsCreated  AuditLog[] @relation("AuditLogCreator")
+
+  @@index([email])
+  @@index([status])
+  @@index([role])
+  @@index([createdAt])
+}
+
+model Profile {
+  id                String      @id @default(cuid())
+  userId            String      @unique
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName          String
+  birthDate         DateTime
+  age               Int
+  theme             ThemeChoice @default(FEMININE)
+  avatarUrl         String?
+
+  // Settings
+  notificationsEnabled Boolean  @default(true)
+  emailNotifications   Boolean  @default(true)
+
+  // Risk tracking
+  currentRiskLevel  RiskLevel   @default(STABLE)
+  lastRiskAssessment DateTime?
+  riskScore         Float       @default(0)
+
+  // Stats
+  totalCheckIns     Int         @default(0)
+  streakDays        Int         @default(0)
+  lastCheckInDate   DateTime?
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  emotionalScores   EmotionalScore[]
+  alerts            EmotionalAlert[]
+
+  @@index([userId])
+  @@index([currentRiskLevel])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  id         String   @id @default(cuid())
+  userId     String
+  token      String   @unique
+  type       String   // email_verification, password_reset
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+}
+
+model PasswordReset {
+  id         String   @id @default(cuid())
+  userId     String
+  token      String   @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime @default(now())
+  ipAddress  String?
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model GuardianConsent {
+  id                String        @id @default(cuid())
+  minorUserId       String        @unique
+  guardianUserId    String?
+
+  minorUser         User          @relation("MinorUser", fields: [minorUserId], references: [id], onDelete: Cascade)
+  guardianUser      User?         @relation("GuardianUser", fields: [guardianUserId], references: [id])
+
+  guardianName      String
+  guardianEmail     String
+
+  status            ConsentStatus @default(PENDING)
+  consentToken      String        @unique
+
+  // Audit fields
+  consentedAt       DateTime?
+  consentIp         String?
+  consentUserAgent  String?
+  termsVersion      String?
+  privacyVersion    String?
+
+  expiresAt         DateTime
+  revokedAt         DateTime?
+  revokeReason      String?
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([guardianEmail])
+  @@index([consentToken])
+  @@index([status])
+}
+
+model EmotionalQuestion {
+  id            String    @id @default(cuid())
+  categoryId    String
+  category      EmotionalCategory @relation(fields: [categoryId], references: [id])
+
+  text          String    @db.Text
+  shortLabel    String
+  type          String    // scale, emoji, boolean, text
+  options       Json?     // For custom options
+  weight        Float     @default(1.0)
+  order         Int       @default(0)
+
+  isActive      Boolean   @default(true)
+  isConditional Boolean   @default(false)
+  conditionField String?
+  conditionValue String?
+
+  minAge        Int?
+  maxAge        Int?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  answers       EmotionalAnswer[]
+
+  @@index([categoryId])
+  @@index([isActive])
+}
+
+model EmotionalCategory {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  icon        String?
+  color       String?
+  order       Int       @default(0)
+  isActive    Boolean   @default(true)
+
+  questions   EmotionalQuestion[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model EmotionalCheckIn {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  startedAt     DateTime  @default(now())
+  completedAt   DateTime?
+  isComplete    Boolean   @default(false)
+
+  // Quick mood capture
+  overallMood   Int?      // 1-10
+  energyLevel   Int?      // 1-10
+  anxietyLevel  Int?      // 1-10
+  sleepQuality  Int?      // 1-10
+  irritability  Int?      // 1-10
+  motivation    Int?      // 1-10
+  appetite      Int?      // 1-10
+
+  dominantFeeling String?
+  freeText        String? @db.Text
+
+  // Analysis
+  riskFlags     String[]  @default([])
+  internalScore Float?
+  riskLevel     RiskLevel @default(STABLE)
+
+  // AI interaction
+  aiSessionId   String?
+
+  answers       EmotionalAnswer[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([riskLevel])
+}
+
+model EmotionalAnswer {
+  id          String    @id @default(cuid())
+  checkInId   String
+  checkIn     EmotionalCheckIn @relation(fields: [checkInId], references: [id], onDelete: Cascade)
+  questionId  String
+  question    EmotionalQuestion @relation(fields: [questionId], references: [id])
+
+  answer      String    @db.Text
+  numericValue Float?
+
+  createdAt   DateTime  @default(now())
+
+  @@index([checkInId])
+  @@index([questionId])
+}
+
+model EmotionalScore {
+  id          String    @id @default(cuid())
+  profileId   String
+  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  period      String    // daily, weekly, monthly
+  periodDate  DateTime
+
+  overallScore      Float
+  moodAvg           Float?
+  energyAvg         Float?
+  anxietyAvg        Float?
+  sleepAvg          Float?
+  motivationAvg     Float?
+
+  trend             String?   // improving, stable, declining
+  riskLevel         RiskLevel @default(STABLE)
+
+  checkInsCount     Int       @default(0)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([profileId])
+  @@index([periodDate])
+  @@unique([profileId, period, periodDate])
+}
+
+model EmotionalAlert {
+  id          String    @id @default(cuid())
+  profileId   String
+  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  alertType   AlertType
+  riskLevel   RiskLevel
+  message     String    @db.Text
+
+  isRead      Boolean   @default(false)
+  isResolved  Boolean   @default(false)
+  resolvedAt  DateTime?
+  resolvedBy  String?
+  resolveNote String?
+
+  triggeredBy String?   // checkin_id or analysis
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([profileId])
+  @@index([isResolved])
+  @@index([riskLevel])
+  @@index([createdAt])
+}
+
+model AISession {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  sessionType String    // checkin, conversation, reengagement
+  messages    Json      @default("[]")
+
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
+  isComplete  Boolean   @default(false)
+
+  riskFlagsDetected String[] @default([])
+  riskLevel   RiskLevel @default(STABLE)
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model AIMemory {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  memoryType  String    // pattern, preference, history_summary, risk_note
+  content     String    @db.Text
+  metadata    Json?
+
+  isActive    Boolean   @default(true)
+  expiresAt   DateTime?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([memoryType])
+}
+
+model AIConfiguration {
+  id          String    @id @default(cuid())
+  key         String    @unique
+  value       String    @db.Text
+  description String?
+  isActive    Boolean   @default(true)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model TermsOfUse {
+  id          String    @id @default(cuid())
+  version     String    @unique
+  content     String    @db.Text
+  summary     String?   @db.Text
+  isActive    Boolean   @default(false)
+  publishedAt DateTime?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  consentLogs ConsentLog[]
+}
+
+model PrivacyPolicy {
+  id          String    @id @default(cuid())
+  version     String    @unique
+  content     String    @db.Text
+  summary     String?   @db.Text
+  isActive    Boolean   @default(false)
+  publishedAt DateTime?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  consentLogs ConsentLog[]
+}
+
+model ConsentLog {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  consentType     String    // terms, privacy, minor_consent
+  termsVersionId  String?
+  privacyVersionId String?
+
+  termsVersion    TermsOfUse?    @relation(fields: [termsVersionId], references: [id])
+  privacyVersion  PrivacyPolicy? @relation(fields: [privacyVersionId], references: [id])
+
+  accepted        Boolean
+  acceptedAt      DateTime
+  ipAddress       String?
+  userAgent       String?
+
+  revokedAt       DateTime?
+  revokeReason    String?
+
+  createdAt       DateTime  @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  userId      String?
+  createdBy   String?
+  creator     User?     @relation("AuditLogCreator", fields: [createdBy], references: [id])
+
+  action      String
+  resource    String
+  resourceId  String?
+  details     Json?
+
+  ipAddress   String?
+  userAgent   String?
+
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+}
+
+model SecurityEvent {
+  id          String    @id @default(cuid())
+  userId      String?
+  eventType   String    // failed_login, suspicious_activity, data_breach_attempt
+  severity    String    // low, medium, high, critical
+  description String    @db.Text
+  metadata    Json?
+  ipAddress   String?
+  userAgent   String?
+  resolved    Boolean   @default(false)
+  resolvedAt  DateTime?
+  resolvedBy  String?
+
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([severity])
+  @@index([createdAt])
+}
+
+model SupportResource {
+  id          String    @id @default(cuid())
+  title       String
+  description String?   @db.Text
+  url         String?
+  phone       String?
+  type        String    // emergency, professional, community, self_care
+  targetRisk  RiskLevel[]
+  isActive    Boolean   @default(true)
+  order       Int       @default(0)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model SystemSetting {
+  id          String    @id @default(cuid())
+  key         String    @unique
+  value       String    @db.Text
+  type        String    @default("string") // string, json, boolean, number
+  description String?
+  isPublic    Boolean   @default(false)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model DataExportRequest {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  requestType String    // export, delete, anonymize
+  status      String    // pending, processing, completed, failed
+
+  requestedAt DateTime  @default(now())
+  completedAt DateTime?
+
+  downloadUrl String?
+  expiresAt   DateTime?
+
+  notes       String?
+
+  @@index([userId])
+}
+
+model DataRetentionRule {
+  id           String    @id @default(cuid())
+  dataType     String    @unique
+  retentionDays Int
+  action       String    // delete, anonymize
+  description  String?
+  isActive     Boolean   @default(true)
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
