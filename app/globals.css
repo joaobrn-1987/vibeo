@@ -137,21 +137,75 @@
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200;
   }
 
-  /* Theme feminine overrides */
+  /* === THEME: FEMININE (rose) === */
+  [data-theme="FEMININE"] {
+    --brand-blue: #C4717A;
+    --brand-blue-light: #E8A0A7;
+    --ring: 355 42% 60%;
+  }
+  [data-theme="FEMININE"] .btn-primary,
+  [data-theme="FEMININE"] [class*="bg-primary-500"],
+  [data-theme="FEMININE"] [class*="bg-primary-600"] {
+    background-color: #C4717A !important;
+  }
+  [data-theme="FEMININE"] [class*="bg-primary-50"] { background-color: #FDF0F1 !important; }
+  [data-theme="FEMININE"] [class*="bg-primary-100"] { background-color: #FAE2E4 !important; }
+  [data-theme="FEMININE"] [class*="text-primary-500"],
+  [data-theme="FEMININE"] [class*="text-primary-600"] { color: #C4717A !important; }
+  [data-theme="FEMININE"] [class*="text-primary-700"] { color: #a05660 !important; }
+  [data-theme="FEMININE"] [class*="border-primary-"] { border-color: #C4717A !important; }
+  [data-theme="FEMININE"] [class*="from-primary-"] { --tw-gradient-from: #C4717A !important; }
+  [data-theme="FEMININE"] [class*="to-primary-"] { --tw-gradient-to: #a05660 !important; }
   [data-theme="FEMININE"] .theme-primary { color: #C4717A; }
   [data-theme="FEMININE"] .theme-bg { background-color: #FDF0F1; }
   [data-theme="FEMININE"] .theme-gradient {
     background: linear-gradient(135deg, #C4717A 0%, #4A6FA5 100%);
   }
 
-  /* Theme masculine overrides */
+  /* === THEME: MASCULINE (deep blue) === */
+  [data-theme="MASCULINE"] {
+    --brand-blue: #2E5F8A;
+    --brand-blue-light: #6A9BBF;
+    --ring: 210 50% 35%;
+  }
+  [data-theme="MASCULINE"] .btn-primary,
+  [data-theme="MASCULINE"] [class*="bg-primary-500"],
+  [data-theme="MASCULINE"] [class*="bg-primary-600"] {
+    background-color: #2E5F8A !important;
+  }
+  [data-theme="MASCULINE"] [class*="bg-primary-50"] { background-color: #EBF1F8 !important; }
+  [data-theme="MASCULINE"] [class*="bg-primary-100"] { background-color: #D4E4F2 !important; }
+  [data-theme="MASCULINE"] [class*="text-primary-500"],
+  [data-theme="MASCULINE"] [class*="text-primary-600"] { color: #2E5F8A !important; }
+  [data-theme="MASCULINE"] [class*="text-primary-700"] { color: #1A3A5C !important; }
+  [data-theme="MASCULINE"] [class*="border-primary-"] { border-color: #2E5F8A !important; }
+  [data-theme="MASCULINE"] [class*="from-primary-"] { --tw-gradient-from: #2E5F8A !important; }
+  [data-theme="MASCULINE"] [class*="to-primary-"] { --tw-gradient-to: #1A3A5C !important; }
   [data-theme="MASCULINE"] .theme-primary { color: #2E5F8A; }
   [data-theme="MASCULINE"] .theme-bg { background-color: #EBF1F8; }
   [data-theme="MASCULINE"] .theme-gradient {
     background: linear-gradient(135deg, #2E5F8A 0%, #1A3A5C 100%);
   }
 
-  /* Theme diversity overrides */
+  /* === THEME: DIVERSITY (purple/teal) === */
+  [data-theme="DIVERSITY"] {
+    --brand-blue: #7B5EA7;
+    --brand-blue-light: #4A9B8E;
+    --ring: 270 30% 50%;
+  }
+  [data-theme="DIVERSITY"] .btn-primary,
+  [data-theme="DIVERSITY"] [class*="bg-primary-500"],
+  [data-theme="DIVERSITY"] [class*="bg-primary-600"] {
+    background-color: #7B5EA7 !important;
+  }
+  [data-theme="DIVERSITY"] [class*="bg-primary-50"] { background-color: #F3EFF8 !important; }
+  [data-theme="DIVERSITY"] [class*="bg-primary-100"] { background-color: #E4DCF0 !important; }
+  [data-theme="DIVERSITY"] [class*="text-primary-500"],
+  [data-theme="DIVERSITY"] [class*="text-primary-600"] { color: #7B5EA7 !important; }
+  [data-theme="DIVERSITY"] [class*="text-primary-700"] { color: #5a3f85 !important; }
+  [data-theme="DIVERSITY"] [class*="border-primary-"] { border-color: #7B5EA7 !important; }
+  [data-theme="DIVERSITY"] [class*="from-primary-"] { --tw-gradient-from: #7B5EA7 !important; }
+  [data-theme="DIVERSITY"] [class*="to-primary-"] { --tw-gradient-to: #4A9B8E !important; }
   [data-theme="DIVERSITY"] .theme-primary { color: #7B5EA7; }
   [data-theme="DIVERSITY"] .theme-bg { background-color: #F3EFF8; }
   [data-theme="DIVERSITY"] .theme-gradient {
