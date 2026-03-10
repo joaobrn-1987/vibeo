@@ -165,7 +165,7 @@ export default function CadastroPage() {
           {step === 1 && (
             <div className="animate-slide-up">
               <div className="mb-8">
-                <h1 className="font-display font-black text-3xl text-foreground mb-2">Criar conta</h1>
+                <h1 className="font-display font-black text-2xl sm:text-3xl text-foreground mb-2">Criar conta</h1>
                 <p className="text-foreground/60">Primeiro, precisamos saber sua data de nascimento.</p>
               </div>
 
@@ -217,7 +217,7 @@ export default function CadastroPage() {
                 <button onClick={() => setStep(1)} className="flex items-center gap-1.5 text-sm text-foreground/50 hover:text-foreground mb-4 transition-colors">
                   ← Voltar
                 </button>
-                <h1 className="font-display font-black text-3xl text-foreground mb-2">
+                <h1 className="font-display font-black text-2xl sm:text-3xl text-foreground mb-2">
                   {isMinor ? `Olá! Você tem ${age} anos.` : "Seus dados"}
                 </h1>
                 <p className="text-foreground/60 text-sm leading-relaxed">

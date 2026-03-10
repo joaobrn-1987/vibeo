@@ -25,7 +25,7 @@ export default function LandingPage() {
                 Acompanhamento emocional com IA
               </div>
 
-              <h1 className="font-display text-5xl sm:text-6xl font-black text-foreground leading-[1.05] mb-6">
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-black text-foreground leading-[1.05] mb-6">
                 Cuide do seu
                 <span className="block text-gradient-accent">bem-estar</span>
                 <span className="block text-primary-600">emocional</span>
@@ -160,7 +160,7 @@ export default function LandingPage() {
       <section id="como-funciona" className="py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-14">
-            <h2 className="font-display text-4xl font-black text-foreground mb-4">
+            <h2 className="font-display text-3xl sm:text-4xl font-black text-foreground mb-4">
               Como o Vibeo funciona?
             </h2>
             <p className="text-lg text-foreground/60 max-w-2xl mx-auto">
@@ -212,7 +212,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
-              <h2 className="font-display text-4xl font-black text-foreground mb-6">
+              <h2 className="font-display text-3xl sm:text-4xl font-black text-foreground mb-6">
                 Feito para <span className="text-gradient-accent">você</span>, do jeito que você merece
               </h2>
               <div className="space-y-5">
@@ -287,7 +287,7 @@ export default function LandingPage() {
       {/* PRIVACY SECTION */}
       <section id="privacidade" className="py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="vibeo-card p-10 bg-gradient-to-br from-primary-50 to-cream-100 border-primary-100 relative overflow-hidden">
+          <div className="vibeo-card p-6 sm:p-10 bg-gradient-to-br from-primary-50 to-cream-100 border-primary-100 relative overflow-hidden">
             <div className="blob-blue w-64 h-64 -top-16 -right-16 opacity-30" style={{position:'absolute'}} />
             <div className="relative grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
               <div>
@@ -359,7 +359,7 @@ export default function LandingPage() {
       {/* CTA */}
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <h2 className="font-display text-4xl font-black text-foreground mb-4">
+          <h2 className="font-display text-3xl sm:text-4xl font-black text-foreground mb-4">
             Pronto para começar?
           </h2>
           <p className="text-lg text-foreground/60 mb-8 max-w-xl mx-auto">

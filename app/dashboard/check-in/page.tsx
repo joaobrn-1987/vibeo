@@ -238,7 +238,7 @@ export default function CheckInPage() {
       </div>
 
       <Card>
-        <CardContent className="p-8">
+        <CardContent className="p-5 sm:p-8">
           {/* Category */}
           <div className="flex items-center gap-2 mb-6">
             <span className="text-3xl">{question.emoji}</span>
@@ -246,14 +246,14 @@ export default function CheckInPage() {
           </div>
 
           {/* Question */}
-          <h2 className="font-display font-bold text-2xl text-foreground mb-8 leading-tight">
+          <h2 className="font-display font-bold text-xl sm:text-2xl text-foreground mb-6 sm:mb-8 leading-tight">
             {question.question}
           </h2>
 
           {/* Scale input */}
           {question.type === "scale" && (
             <div className="space-y-4">
-              <div className="grid grid-cols-10 gap-1.5">
+              <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
                 {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => {
                   const isSelected = answers[question.id] === n
                   let colorClass = "bg-cream-100 hover:bg-primary-50 border-cream-200 hover:border-primary-200 text-foreground/60"
@@ -272,7 +272,7 @@ export default function CheckInPage() {
                     <button
                       key={n}
                       onClick={() => handleAnswer(n)}
-                      className={`emotion-scale-btn ${colorClass} border-2 font-bold transition-all duration-150 hover:scale-105`}
+                      className={`min-h-[44px] rounded-xl font-bold text-sm transition-all duration-150 hover:scale-105 border-2 ${colorClass}`}
                     >
                       {n}
                     </button>

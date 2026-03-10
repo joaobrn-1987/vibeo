@@ -203,7 +203,7 @@
 
   /* Admin sidebar */
   .admin-sidebar {
-    @apply fixed left-0 top-0 h-full w-64 bg-white border-r border-cream-200 shadow-soft z-40 flex flex-col;
+    @apply fixed left-0 top-0 h-full w-64 bg-white border-r border-cream-200 shadow-soft flex flex-col;
   }
 
   .admin-nav-item {

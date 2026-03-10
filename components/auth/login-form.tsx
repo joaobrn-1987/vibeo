@@ -84,7 +84,7 @@ export function LoginForm() {
             <span className="font-display font-bold text-2xl text-primary-700">Vibeo</span>
           </Link>
           <div className="mb-8">
-            <h1 className="font-display font-black text-3xl text-foreground mb-2">Entrar</h1>
+            <h1 className="font-display font-black text-2xl sm:text-3xl text-foreground mb-2">Entrar</h1>
             <p className="text-foreground/60">Acesse sua conta para continuar.</p>
           </div>
           {registered && <Alert variant="success" title="Conta criada!" description="Verifique seu e-mail para ativar sua conta." className="mb-6" />}

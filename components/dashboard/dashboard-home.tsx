@@ -45,7 +45,7 @@ export function DashboardHome({ user }: DashboardHomeProps) {
       {/* Greeting */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-display font-black text-3xl text-foreground">
+          <h1 className="font-display font-black text-2xl sm:text-3xl text-foreground">
             {greeting}, {user.name}! ✨
           </h1>
           <p className="text-foreground/60 mt-1">

@@ -2,16 +2,29 @@
 import Link from "next/link"
 import { Bell, Heart, Menu } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useSidebar } from "./sidebar-context"
 
 interface HeaderProps {
   user: { name?: string | null; email?: string | null; role?: string }
 }
 
 export function DashboardHeader({ user }: HeaderProps) {
+  const { toggle } = useSidebar()
+
   return (
     <header className="sticky top-0 z-30 glass border-b border-cream-200 px-4 sm:px-6 h-16 flex items-center justify-between">
-      <div className="flex items-center gap-3 lg:hidden">
-        <Link href="/dashboard" className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
+        {/* Hamburger — mobile only */}
+        <button
+          onClick={toggle}
+          className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl hover:bg-cream-200 transition-colors"
+          aria-label="Abrir menu"
+        >
+          <Menu className="w-5 h-5 text-foreground/70" />
+        </button>
+
+        {/* Logo — mobile only, next to hamburger */}
+        <Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
             <Heart className="w-4 h-4 text-white" fill="currentColor" />
           </div>
@@ -24,12 +37,12 @@ export function DashboardHeader({ user }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-3 ml-auto">
-        <button className="w-9 h-9 rounded-xl bg-cream-100 hover:bg-cream-200 flex items-center justify-center transition-colors relative">
+        <button className="w-10 h-10 rounded-xl bg-cream-100 hover:bg-cream-200 flex items-center justify-center transition-colors relative">
           <Bell className="w-4 h-4 text-foreground/60" />
         </button>
 
         <Link href="/dashboard/perfil">
-          <Avatar className="w-9 h-9 cursor-pointer">
+          <Avatar className="w-10 h-10 cursor-pointer">
             <AvatarFallback>
               {user.name?.charAt(0).toUpperCase() || "U"}
             </AvatarFallback>
