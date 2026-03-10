@@ -100,6 +100,7 @@ export const authOptions: NextAuthOptions = {
           status: user.status,
           theme: user.profile?.theme || 'FEMININE',
           isMinor: user.isMinor,
+          onboardingCompleted: user.profile?.onboardingCompleted ?? true,
         }
       }
     })
@@ -112,9 +113,11 @@ export const authOptions: NextAuthOptions = {
         token.status = (user as any).status
         token.theme = (user as any).theme
         token.isMinor = (user as any).isMinor
+        token.onboardingCompleted = (user as any).onboardingCompleted
       }
-      if (trigger === 'update' && session?.theme) {
-        token.theme = session.theme
+      if (trigger === 'update') {
+        if (session?.theme) token.theme = session.theme
+        if (session?.onboardingCompleted !== undefined) token.onboardingCompleted = session.onboardingCompleted
       }
       return token
     },
@@ -125,6 +128,7 @@ export const authOptions: NextAuthOptions = {
         session.user.status = token.status as string
         session.user.theme = token.theme as string
         session.user.isMinor = token.isMinor as boolean
+        session.user.onboardingCompleted = token.onboardingCompleted as boolean
       }
       return session
     }

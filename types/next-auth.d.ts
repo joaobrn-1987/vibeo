@@ -10,6 +10,7 @@ declare module "next-auth" {
       status: string
       theme: string
       isMinor: boolean
+      onboardingCompleted: boolean
     }
   }
 }

@@ -113,6 +113,9 @@ model Profile {
   lastRiskAssessment DateTime?
   riskScore         Float       @default(0)
 
+  // Onboarding
+  onboardingCompleted Boolean   @default(false)
+
   // Stats
   totalCheckIns     Int         @default(0)
   streakDays        Int         @default(0)

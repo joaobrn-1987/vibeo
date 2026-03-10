@@ -61,6 +61,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
+  // Onboarding redirect: send new users to theme picker on first access
+  const isDashboardPage = pathname.startsWith('/dashboard') && !isApiRoute
+  const isOnboardingPage = pathname === '/dashboard/bem-vindo'
+  if (isDashboardPage && !isOnboardingPage && token.onboardingCompleted === false) {
+    return NextResponse.redirect(new URL('/dashboard/bem-vindo', request.url))
+  }
+  // Prevent onboarding page loop: if already completed, send to dashboard
+  if (isOnboardingPage && token.onboardingCompleted === true) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
   return response
 }
 
