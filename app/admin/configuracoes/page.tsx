@@ -1,10 +1,28 @@
-export default function Page() {
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
+import { redirect } from "next/navigation"
+import { ConfiguracoesClient } from "@/components/admin/configuracoes-client"
+
+export const metadata = { title: "Configurações – Admin" }
+
+export default async function ConfiguracoesPage() {
+  const session = await getServerSession(authOptions)
+  if (!session) redirect("/login")
+  if (session.user.role !== "MASTER_ADMIN") redirect("/admin")
+
+  const settings = await prisma.systemSetting.findMany({ orderBy: { key: "asc" } })
+  const settingsMap = Object.fromEntries(settings.map((s) => [s.key, s.value]))
+
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="vibeo-card p-12 text-center">
-        <h1 className="font-display font-bold text-2xl text-foreground mb-2">Em breve</h1>
-        <p className="text-foreground/50">Esta seção está sendo preparada.</p>
-      </div>
-    </div>
+    <ConfiguracoesClient
+      currentEmail={session.user.email!}
+      registrationsBlocked={settingsMap["REGISTRATIONS_BLOCKED"] === "true"}
+      smtpHost={settingsMap["SMTP_HOST"] || ""}
+      smtpPort={settingsMap["SMTP_PORT"] || "587"}
+      smtpUser={settingsMap["SMTP_USER"] || ""}
+      smtpPass={settingsMap["SMTP_PASS"] || ""}
+      smtpFrom={settingsMap["SMTP_FROM"] || ""}
+    />
   )
 }

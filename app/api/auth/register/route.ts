@@ -6,6 +6,17 @@ import { registerSchema } from "@/lib/validations"
 
 export async function POST(req: NextRequest) {
   try {
+    // Check if new registrations are blocked
+    const blockSetting = await prisma.systemSetting.findUnique({
+      where: { key: "REGISTRATIONS_BLOCKED" },
+    })
+    if (blockSetting?.value === "true") {
+      return NextResponse.json(
+        { error: "Novos cadastros estão temporariamente desativados pelo administrador." },
+        { status: 403 }
+      )
+    }
+
     const body = await req.json()
     const parseResult = registerSchema.safeParse(body)
 
