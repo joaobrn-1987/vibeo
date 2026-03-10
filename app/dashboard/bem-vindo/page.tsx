@@ -1,10 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Check, ArrowRight } from "lucide-react"
+import { Check, ArrowRight, Loader2 } from "lucide-react"
 
 const themes = [
   {
@@ -39,7 +38,6 @@ const themes = [
 ]
 
 export default function BemVindoPage() {
-  const router = useRouter()
   const { data: session, update } = useSession()
   const [selected, setSelected] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -47,18 +45,24 @@ export default function BemVindoPage() {
   const firstName = session?.user?.name?.split(" ")[0] || "por aí"
 
   async function handleConfirm() {
-    if (!selected) return
+    if (!selected || saving) return
     setSaving(true)
     try {
-      await fetch("/api/user/onboarding", {
+      const res = await fetch("/api/user/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ theme: selected }),
       })
-      // Update JWT so middleware knows onboarding is done
+      if (!res.ok) {
+        setSaving(false)
+        return
+      }
+      // Update JWT session with new values
       await update({ theme: selected, onboardingCompleted: true })
-      router.push("/dashboard")
-    } finally {
+      // Hard navigation so the middleware re-reads the updated JWT cookie
+      // router.push() would redirect before the new JWT is set
+      window.location.href = "/dashboard"
+    } catch {
       setSaving(false)
     }
   }
@@ -118,7 +122,8 @@ export default function BemVindoPage() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     exit={{ scale: 0 }}
-                    className="absolute top-2 right-2 w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center shadow-md"
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center shadow-md"
+                    style={{ background: "#4A6FA5" }}
                   >
                     <Check className="w-4 h-4 text-white" />
                   </motion.div>
@@ -128,23 +133,29 @@ export default function BemVindoPage() {
           ))}
         </div>
 
-        {/* Confirm button */}
+        {/* Confirm button — inline style to avoid theme CSS overrides on this page */}
         <motion.button
-          whileHover={selected ? { scale: 1.02 } : {}}
-          whileTap={selected ? { scale: 0.98 } : {}}
+          whileHover={selected && !saving ? { scale: 1.02 } : {}}
+          whileTap={selected && !saving ? { scale: 0.98 } : {}}
           onClick={handleConfirm}
           disabled={!selected || saving}
-          className={`w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all duration-200 ${
-            selected
-              ? "bg-primary-500 text-white shadow-card hover:bg-primary-600"
-              : "bg-cream-200 text-foreground/30 cursor-not-allowed"
-          }`}
+          style={
+            selected && !saving
+              ? { background: "#4A6FA5", color: "#fff", boxShadow: "0 4px 24px rgba(74,111,165,0.25)" }
+              : { background: "#EDE3D5", color: "#bbb", cursor: "not-allowed" }
+          }
+          className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all duration-200"
         >
           {saving ? (
-            "Salvando..."
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Salvando seu tema...
+            </>
           ) : (
             <>
-              {selected ? `Começar com o tema ${themes.find(t => t.value === selected)?.label}` : "Selecione um tema para continuar"}
+              {selected
+                ? `Começar com o tema ${themes.find(t => t.value === selected)?.label}`
+                : "Selecione um tema para continuar"}
               {selected && <ArrowRight className="w-5 h-5" />}
             </>
           )}
