@@ -1,12 +1,12 @@
 "use client"
 import { useState } from "react"
-import { User, Mail, Calendar, Palette, Shield, LogOut, Trash2 } from "lucide-react"
+import { User, Mail, Calendar, Palette, Shield, LogOut, Trash2, Check } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { formatDate } from "@/lib/utils"
-import { signOut } from "next-auth/react"
+import { signOut, useSession } from "next-auth/react"
 
 const themes = [
   { value: "FEMININE", label: "Feminino", emoji: "🌸", gradient: "from-accent-400 to-accent-600" },
@@ -31,16 +31,27 @@ export function ProfileClient({ user }: ProfileClientProps) {
   const [selectedTheme, setSelectedTheme] = useState(user.theme)
   const [notifications, setNotifications] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const { update } = useSession()
 
   async function handleThemeChange(theme: string) {
     setSelectedTheme(theme)
     setSaving(true)
     try {
-      await fetch("/api/user/theme", {
+      const res = await fetch("/api/user/theme", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ theme }),
       })
+      if (res.ok) {
+        // Update session JWT so theme persists across navigation
+        await update({ theme })
+        // Apply theme to DOM immediately without page reload
+        const themeEl = document.querySelector('[data-theme]')
+        if (themeEl) themeEl.setAttribute('data-theme', theme)
+        setSaved(true)
+        setTimeout(() => setSaved(false), 2500)
+      }
     } finally {
       setSaving(false)
     }
@@ -94,25 +105,37 @@ export function ProfileClient({ user }: ProfileClientProps) {
           <CardTitle className="flex items-center gap-2 text-base">
             <Palette className="w-5 h-5 text-primary-500" />
             Tema visual
+            {saved && (
+              <span className="ml-auto flex items-center gap-1 text-xs text-green-600 font-normal">
+                <Check className="w-3.5 h-3.5" /> Tema salvo!
+              </span>
+            )}
+            {saving && (
+              <span className="ml-auto text-xs text-foreground/40 font-normal">Salvando...</span>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 pt-0">
-          <p className="text-sm text-foreground/50 mb-4">Escolha o tema que mais combina com você.</p>
+          <p className="text-sm text-foreground/50 mb-4">Escolha o tema que mais combina com você. A mudança é aplicada imediatamente.</p>
           <div className="grid grid-cols-3 gap-3">
             {themes.map((theme) => (
               <button
                 key={theme.value}
                 onClick={() => handleThemeChange(theme.value)}
+                disabled={saving}
                 className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-150 ${
                   selectedTheme === theme.value
                     ? "border-primary-400 bg-primary-50 shadow-soft"
                     : "border-cream-200 bg-white hover:border-primary-200"
-                }`}
+                } disabled:opacity-60 disabled:cursor-not-allowed`}
               >
                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${theme.gradient} flex items-center justify-center text-2xl`}>
                   {theme.emoji}
                 </div>
                 <span className="text-xs font-semibold text-foreground">{theme.label}</span>
+                {selectedTheme === theme.value && (
+                  <span className="text-[10px] text-primary-500 font-semibold">Ativo</span>
+                )}
               </button>
             ))}
           </div>
