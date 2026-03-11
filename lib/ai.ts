@@ -53,17 +53,78 @@ export function buildSystemPrompt(configs: AIConfig[]): string {
     : basePrompt
 }
 
-/** Builds user context block */
-function buildContextBlock(userContext?: { riskLevel?: string; recentMood?: number; streakDays?: number }): string {
-  if (!userContext?.riskLevel) return ""
+export interface UserMemory {
+  name?: string
+  age?: number
+  riskLevel?: string
+  recentMood?: number
+  streakDays?: number
+  recentCheckIns?: Array<{
+    date: string
+    overallMood?: number | null
+    energyLevel?: number | null
+    anxietyLevel?: number | null
+    sleepQuality?: number | null
+    dominantFeeling?: string | null
+    freeText?: string | null
+    riskLevel?: string
+  }>
+  pastSessionSummaries?: Array<{
+    date: string
+    userMessages: string[]
+    riskLevel?: string
+  }>
+}
+
+/** Builds user context block for AI system prompt */
+function buildContextBlock(memory?: UserMemory): string {
+  if (!memory) return ""
+
   const riskLabels: Record<string, string> = {
     STABLE: "Estável", ATTENTION: "Atenção",
     HIGH_RISK: "Alto risco", IMMEDIATE_PRIORITY: "Prioridade imediata",
   }
-  let ctx = `\n[Contexto do usuário: nível de bem-estar = ${riskLabels[userContext.riskLevel] || userContext.riskLevel}`
-  if (userContext.recentMood) ctx += `, humor recente = ${userContext.recentMood}/10`
-  if (userContext.streakDays) ctx += `, sequência = ${userContext.streakDays} dias`
-  return ctx + "]"
+
+  const lines: string[] = []
+
+  // Identity
+  if (memory.name) lines.push(`Nome do usuário: ${memory.name}`)
+  if (memory.age) lines.push(`Idade: ${memory.age} anos`)
+
+  // Current status
+  if (memory.riskLevel) lines.push(`Nível de bem-estar atual: ${riskLabels[memory.riskLevel] || memory.riskLevel}`)
+  if (memory.recentMood) lines.push(`Humor mais recente: ${memory.recentMood}/10`)
+  if (memory.streakDays) lines.push(`Sequência de check-ins: ${memory.streakDays} dias`)
+
+  // Recent check-ins
+  if (memory.recentCheckIns && memory.recentCheckIns.length > 0) {
+    lines.push("\nHistórico de check-ins recentes:")
+    for (const c of memory.recentCheckIns) {
+      const parts: string[] = [`  • ${c.date}:`]
+      if (c.overallMood) parts.push(`humor ${c.overallMood}/10`)
+      if (c.energyLevel) parts.push(`energia ${c.energyLevel}/10`)
+      if (c.anxietyLevel) parts.push(`ansiedade ${c.anxietyLevel}/10`)
+      if (c.sleepQuality) parts.push(`sono ${c.sleepQuality}/10`)
+      if (c.dominantFeeling) parts.push(`sentimento: ${c.dominantFeeling}`)
+      if (c.riskLevel && c.riskLevel !== "STABLE") parts.push(`risco: ${riskLabels[c.riskLevel] || c.riskLevel}`)
+      lines.push(parts.join(", "))
+      if (c.freeText) lines.push(`    Nota: "${c.freeText.slice(0, 200)}"`)
+    }
+  }
+
+  // Past conversations
+  if (memory.pastSessionSummaries && memory.pastSessionSummaries.length > 0) {
+    lines.push("\nConversas anteriores com Vibe:")
+    for (const s of memory.pastSessionSummaries) {
+      lines.push(`  • ${s.date}${s.riskLevel && s.riskLevel !== "STABLE" ? ` [${riskLabels[s.riskLevel] || s.riskLevel}]` : ""}:`)
+      for (const msg of s.userMessages.slice(0, 4)) {
+        lines.push(`    - "${msg.slice(0, 150)}"`)
+      }
+    }
+  }
+
+  if (lines.length === 0) return ""
+  return `\n\n[Memória e contexto do usuário]\n${lines.join("\n")}\n[Fim do contexto]`
 }
 
 // ─── Simple rate limiter (15 RPM = 1 req per 4s for Gemini free tier) ─────────
@@ -144,14 +205,14 @@ async function callOpenAICompatible(
 /** Sends a message to the AI and returns the response */
 export async function sendToAI(
   messages: Array<{ role: "user" | "assistant"; content: string }>,
-  userContext?: { riskLevel?: string; recentMood?: number; streakDays?: number }
+  userMemory?: UserMemory
 ): Promise<{ success: true; content: string } | { success: false; error: string }> {
   const [settings, configs] = await Promise.all([getAISettings(), getActiveAIConfigs()])
 
   if (!settings.enabled) return { success: false, error: "Integração de IA não está ativada." }
   if (!settings.apiKey) return { success: false, error: "Chave de API não configurada." }
 
-  const systemPrompt = buildSystemPrompt(configs) + buildContextBlock(userContext)
+  const systemPrompt = buildSystemPrompt(configs) + buildContextBlock(userMemory)
   const maxTokens = parseInt(configs.find((c) => c.key === "MAX_TOKENS")?.value || "1024") || 1024
   const temperature = parseFloat(configs.find((c) => c.key === "TEMPERATURE")?.value || "0.7") || 0.7
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { sendToAI, assessChatRisk } from "@/lib/ai"
+import { sendToAI, assessChatRisk, UserMemory } from "@/lib/ai"
 
 const RISK_ORDER = ["STABLE", "ATTENTION", "HIGH_RISK", "IMMEDIATE_PRIORITY"]
 
@@ -38,24 +38,72 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Dados inválidos." }, { status: 400 })
   }
 
-  // Get user context for the AI
-  const [profile, lastCheckIn] = await Promise.all([
+  // Fetch rich context for AI memory
+  const [profile, recentCheckIns, pastSessions] = await Promise.all([
     prisma.profile.findUnique({
       where: { userId: session.user.id },
-      select: { currentRiskLevel: true, riskScore: true, streakDays: true },
+      select: { fullName: true, socialName: true, age: true, currentRiskLevel: true, streakDays: true },
     }),
-    prisma.emotionalCheckIn.findFirst({
+    prisma.emotionalCheckIn.findMany({
       where: { userId: session.user.id, isComplete: true },
       orderBy: { completedAt: "desc" },
-      select: { overallMood: true },
+      take: 7,
+      select: {
+        completedAt: true,
+        overallMood: true,
+        energyLevel: true,
+        anxietyLevel: true,
+        sleepQuality: true,
+        dominantFeeling: true,
+        freeText: true,
+        riskLevel: true,
+      },
+    }),
+    prisma.aISession.findMany({
+      where: {
+        userId: session.user.id,
+        sessionType: "conversation",
+        isComplete: true,
+        ...(sessionId ? { NOT: { id: sessionId } } : {}),
+      },
+      orderBy: { startedAt: "desc" },
+      take: 3,
+      select: { startedAt: true, messages: true, riskLevel: true },
     }),
   ])
 
-  const result = await sendToAI(messages, {
+  const tz = process.env.TZ || "America/Sao_Paulo"
+  const fmt = (d: Date) => new Intl.DateTimeFormat("pt-BR", { timeZone: tz, day: "2-digit", month: "2-digit", year: "numeric" }).format(d)
+
+  const userMemory: UserMemory = {
+    name: profile?.socialName || profile?.fullName,
+    age: profile?.age,
     riskLevel: profile?.currentRiskLevel,
-    recentMood: lastCheckIn?.overallMood || undefined,
     streakDays: profile?.streakDays,
-  })
+    recentMood: recentCheckIns[0]?.overallMood ?? undefined,
+    recentCheckIns: recentCheckIns.map((c) => ({
+      date: c.completedAt ? fmt(c.completedAt) : "—",
+      overallMood: c.overallMood,
+      energyLevel: c.energyLevel,
+      anxietyLevel: c.anxietyLevel,
+      sleepQuality: c.sleepQuality,
+      dominantFeeling: c.dominantFeeling,
+      freeText: c.freeText,
+      riskLevel: c.riskLevel as string,
+    })),
+    pastSessionSummaries: pastSessions.map((s) => {
+      const msgs = (s.messages as Array<{ role: string; content: string }>)
+        .filter((m) => m.role === "user")
+        .map((m) => m.content)
+      return {
+        date: fmt(s.startedAt),
+        userMessages: msgs,
+        riskLevel: s.riskLevel as string,
+      }
+    }),
+  }
+
+  const result = await sendToAI(messages, userMemory)
 
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 503 })
