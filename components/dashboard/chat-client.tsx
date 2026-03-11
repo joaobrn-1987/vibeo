@@ -86,7 +86,6 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
     if (loading) return
     const newMessages: Message[] = [...messages, { role: "user", content: text }]
     setMessages(newMessages)
-    setInput("")
     setLoading(true)
     setError(null)
     try {
@@ -136,8 +135,11 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
     )
   }
 
+  const showWelcome = !loadingHistory && messages.length === 0
+
   return (
-    <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-8rem)]">
+    <div className="max-w-2xl mx-auto flex flex-col" style={{ height: "calc(100vh - 8rem)" }}>
+      {/* Header */}
       <div className="mb-4 flex-shrink-0 flex items-center gap-3">
         <Link href="/dashboard" className="lg:hidden w-9 h-9 flex items-center justify-center rounded-xl hover:bg-cream-200 transition-colors flex-shrink-0" aria-label="Voltar">
           <ArrowLeft className="w-5 h-5 text-foreground/60" />
@@ -148,83 +150,91 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
         </div>
       </div>
 
-      {/* Messages area */}
-      <div className="flex-1 overflow-y-auto space-y-4 pr-1 mb-4">
-        {loadingHistory ? (
-          <div className="flex flex-col items-center justify-center h-full text-center px-4 gap-3">
+      {/* Messages area — fixed height, never grows */}
+      <div className="flex-1 min-h-0 overflow-y-auto mb-4">
+        {/* Loading history */}
+        {loadingHistory && (
+          <div className="h-full flex flex-col items-center justify-center gap-3 px-4">
             <Loader2 className="w-8 h-8 text-primary-400 animate-spin" />
             <p className="text-sm text-foreground/40">Carregando conversa...</p>
           </div>
-        ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center px-4 gap-4">
+        )}
+
+        {/* Welcome screen — only when truly empty */}
+        {showWelcome && (
+          <div className="h-full flex flex-col items-center justify-center gap-4 px-4 text-center">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-400 to-accent-400 flex items-center justify-center">
               <MessageCircle className="w-8 h-8 text-white" />
             </div>
             <div>
               <h2 className="font-semibold text-foreground text-lg">Olá, {displayName}! 👋</h2>
               <p className="text-sm text-foreground/50 mt-1 max-w-sm">
-                Sou a Vibe, sua assistente de bem-estar emocional. Estou aqui para ouvir e ajudar. Como você está se sentindo hoje?
+                Sou a Vibe, sua assistente de bem-estar emocional. Estou aqui para ouvir e ajudar.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2 justify-center mt-2">
-              {["Como estou me sentindo hoje", "Preciso de ajuda para relaxar", "Me sinto ansioso(a)", "Quero conversar"].map((suggestion) => (
+            <div className="flex flex-wrap gap-2 justify-center">
+              {["Como estou me sentindo hoje", "Preciso de ajuda para relaxar", "Me sinto ansioso(a)", "Quero conversar"].map((s) => (
                 <button
-                  key={suggestion}
-                  onClick={() => sendSuggestion(suggestion)}
+                  key={s}
+                  onClick={() => sendSuggestion(s)}
                   className="text-xs px-3 py-1.5 bg-primary-50 text-primary-600 rounded-full border border-primary-200 hover:bg-primary-100 transition-colors"
                 >
-                  {suggestion}
+                  {s}
                 </button>
               ))}
             </div>
           </div>
-        ) : null}
+        )}
 
-        {messages.map((msg, i) => (
-          <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-              msg.role === "assistant"
-                ? "bg-gradient-to-br from-primary-400 to-accent-400"
-                : "bg-cream-200"
-            }`}>
-              {msg.role === "assistant" ? (
-                <Bot className="w-4 h-4 text-white" />
-              ) : (
-                <User className="w-4 h-4 text-foreground/60" />
-              )}
-            </div>
-            <div className={`max-w-[78%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
-              msg.role === "assistant"
-                ? "bg-white border border-cream-200 text-foreground rounded-tl-sm"
-                : "bg-primary-700 text-white rounded-tr-sm"
-            }`}>
-              {msg.content}
-            </div>
-          </div>
-        ))}
-
-        {loading && (
-          <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-400 flex items-center justify-center flex-shrink-0">
-              <Bot className="w-4 h-4 text-white" />
-            </div>
-            <div className="px-4 py-3 bg-white border border-cream-200 rounded-2xl rounded-tl-sm">
-              <div className="flex gap-1 items-center h-4">
-                <span className="w-2 h-2 rounded-full bg-primary-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                <span className="w-2 h-2 rounded-full bg-primary-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                <span className="w-2 h-2 rounded-full bg-primary-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+        {/* Messages list */}
+        {!loadingHistory && messages.length > 0 && (
+          <div className="space-y-4 pr-1">
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  msg.role === "assistant"
+                    ? "bg-gradient-to-br from-primary-400 to-accent-400"
+                    : "bg-cream-200"
+                }`}>
+                  {msg.role === "assistant"
+                    ? <Bot className="w-4 h-4 text-white" />
+                    : <User className="w-4 h-4 text-foreground/60" />
+                  }
+                </div>
+                <div className={`max-w-[78%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+                  msg.role === "assistant"
+                    ? "bg-white border border-cream-200 text-foreground rounded-tl-sm"
+                    : "bg-primary-700 text-white rounded-tr-sm"
+                }`}>
+                  {msg.content}
+                </div>
               </div>
-            </div>
+            ))}
+
+            {loading && (
+              <div className="flex gap-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-400 flex items-center justify-center flex-shrink-0">
+                  <Bot className="w-4 h-4 text-white" />
+                </div>
+                <div className="px-4 py-3 bg-white border border-cream-200 rounded-2xl rounded-tl-sm">
+                  <div className="flex gap-1 items-center h-4">
+                    <span className="w-2 h-2 rounded-full bg-primary-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-primary-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-primary-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="text-center">
+                <p className="text-xs text-red-500 bg-red-50 rounded-xl px-4 py-2 inline-block">{error}</p>
+              </div>
+            )}
+
+            <div ref={bottomRef} />
           </div>
         )}
-
-        {error && (
-          <div className="text-center">
-            <p className="text-xs text-red-500 bg-red-50 rounded-xl px-4 py-2 inline-block">{error}</p>
-          </div>
-        )}
-
-        <div ref={bottomRef} />
       </div>
 
       {/* Input area */}
@@ -249,7 +259,7 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </Button>
       </div>
-      <p className="text-center text-[10px] text-foreground/30 mt-2">
+      <p className="text-center text-[10px] text-foreground/30 mt-2 flex-shrink-0">
         Em emergências: CVV 188 | SAMU 192
       </p>
     </div>

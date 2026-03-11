@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Heart, LayoutDashboard, Calendar, History, LogOut, HelpCircle, User, TrendingUp, X, MessageCircle } from "lucide-react"
-import { signOut } from "next-auth/react"
+import { signOut, useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import { useSidebar } from "./sidebar-context"
 
@@ -26,6 +26,9 @@ const bottomNavItems = [
 ]
 
 export function DashboardSidebar({ user, aiEnabled }: SidebarProps) {
+  const { data: session } = useSession()
+  const displayName = session?.user?.name ?? user.name
+  const avatarImage = (session?.user as any)?.image ?? null
   const navItems = aiEnabled
     ? [...baseNavItems, chatNavItem, ...bottomNavItems]
     : [...baseNavItems, ...bottomNavItems]
@@ -55,11 +58,14 @@ export function DashboardSidebar({ user, aiEnabled }: SidebarProps) {
       {/* User info */}
       <div className="px-4 py-4 border-b border-cream-200">
         <div className="flex items-center gap-3 px-2">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-400 to-accent-400 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-            {user.name?.charAt(0).toUpperCase() || "U"}
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-400 to-accent-400 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 overflow-hidden">
+            {avatarImage
+              ? <img src={avatarImage} alt={displayName || "Avatar"} className="w-full h-full object-cover" />
+              : displayName?.charAt(0).toUpperCase() || "U"
+            }
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground truncate">{user.name || "Usuário"}</p>
+            <p className="text-sm font-semibold text-foreground truncate">{displayName || "Usuário"}</p>
             <p className="text-xs text-foreground/40 truncate">{user.email}</p>
           </div>
         </div>

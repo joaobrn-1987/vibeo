@@ -140,6 +140,7 @@ export function ProfileClient({ user }: ProfileClientProps) {
         setAvatarPreview(null)
         setAvatarFile(null)
         setAvatarMsg({ type: "ok", text: "Foto atualizada!" })
+        await update({ image: data.avatarUrl })
         setTimeout(() => setAvatarMsg(null), 3000)
       }
     } finally {
@@ -184,6 +185,7 @@ export function ProfileClient({ user }: ProfileClientProps) {
       } else {
         setInfoMsg({ type: "ok", text: "Informações salvas!" })
         setEditingInfo(false)
+        await update({ name: (socialName?.trim() || fullName).trim() })
         setTimeout(() => setInfoMsg(null), 3000)
       }
     } finally {

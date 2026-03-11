@@ -118,6 +118,8 @@ export const authOptions: NextAuthOptions = {
       if (trigger === 'update') {
         if (session?.theme) token.theme = session.theme
         if (session?.onboardingCompleted !== undefined) token.onboardingCompleted = session.onboardingCompleted
+        if (session?.name !== undefined) token.name = session.name
+        if (session?.image !== undefined) token.picture = session.image
       }
       return token
     },
@@ -129,6 +131,8 @@ export const authOptions: NextAuthOptions = {
         session.user.theme = token.theme as string
         session.user.isMinor = token.isMinor as boolean
         session.user.onboardingCompleted = token.onboardingCompleted as boolean
+        if (token.name) session.user.name = token.name as string
+        if (token.picture !== undefined) session.user.image = token.picture as string | null
       }
       return session
     }

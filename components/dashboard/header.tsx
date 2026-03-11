@@ -1,8 +1,9 @@
 "use client"
 import Link from "next/link"
 import { Bell, Heart, Menu } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSidebar } from "./sidebar-context"
+import { useSession } from "next-auth/react"
 
 interface HeaderProps {
   user: { name?: string | null; email?: string | null; role?: string }
@@ -10,6 +11,9 @@ interface HeaderProps {
 
 export function DashboardHeader({ user }: HeaderProps) {
   const { toggle } = useSidebar()
+  const { data: session } = useSession()
+  const displayName = session?.user?.name ?? user.name
+  const avatarImage = (session?.user as any)?.image ?? null
 
   return (
     <header className="sticky top-0 z-30 glass border-b border-cream-200 px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -43,8 +47,9 @@ export function DashboardHeader({ user }: HeaderProps) {
 
         <Link href="/dashboard/perfil">
           <Avatar className="w-10 h-10 cursor-pointer">
+            {avatarImage && <AvatarImage src={avatarImage} alt={displayName || "Avatar"} />}
             <AvatarFallback>
-              {user.name?.charAt(0).toUpperCase() || "U"}
+              {displayName?.charAt(0).toUpperCase() || "U"}
             </AvatarFallback>
           </Avatar>
         </Link>
