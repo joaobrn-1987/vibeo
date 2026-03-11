@@ -8,7 +8,7 @@ import { redirect } from "next/navigation"
 import { ChatClient } from "@/components/dashboard/chat-client"
 import { getAISettings } from "@/lib/ai"
 
-export default async function ChatPage() {
+export default async function ChatPage({ searchParams }: { searchParams: { vibe?: string } }) {
   const session = await getServerSession(authOptions)
   if (!session) redirect("/login")
 
@@ -21,11 +21,13 @@ export default async function ChatPage() {
   ])
 
   const displayName = (profile as any)?.socialName?.trim() || profile?.fullName || session.user.name || "você"
+  const proactive = searchParams.vibe === "proactive"
 
   return (
     <ChatClient
       aiEnabled={aiSettings.enabled}
       displayName={displayName}
+      proactive={proactive}
     />
   )
 }

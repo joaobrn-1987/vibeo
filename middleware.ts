@@ -61,10 +61,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // Onboarding redirect: send new users to theme picker on first access
+  // Onboarding redirect: send new users to theme picker on first access (skip for admins)
   const isDashboardPage = pathname.startsWith('/dashboard') && !isApiRoute
   const isOnboardingPage = pathname === '/dashboard/bem-vindo'
-  if (isDashboardPage && !isOnboardingPage && token.onboardingCompleted === false) {
+  const isAdminUser = token.role === 'ADMIN' || token.role === 'MASTER_ADMIN'
+  if (isDashboardPage && !isOnboardingPage && !isAdminUser && token.onboardingCompleted === false) {
     return NextResponse.redirect(new URL('/dashboard/bem-vindo', request.url))
   }
   // Prevent onboarding page loop: if already completed, send to dashboard

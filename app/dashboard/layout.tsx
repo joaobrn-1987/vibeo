@@ -10,9 +10,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const session = await getServerSession(authOptions)
 
   if (!session) redirect("/login")
-  if (session.user.role === "ADMIN" || session.user.role === "MASTER_ADMIN") {
-    redirect("/admin")
-  }
 
   const aiSetting = await prisma.systemSetting.findUnique({ where: { key: "AI_ENABLED" } })
   const aiEnabled = aiSetting?.value === "true"

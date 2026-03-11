@@ -1,9 +1,9 @@
 "use client"
 import { useState, useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Send, Loader2, MessageCircle, Bot, User, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import Link from "next/link"
 
 interface Message {
   role: "user" | "assistant"
@@ -13,9 +13,13 @@ interface Message {
 interface ChatClientProps {
   aiEnabled: boolean
   displayName: string
+  proactive?: boolean
 }
 
-export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
+export function ChatClient({ aiEnabled, displayName, proactive }: ChatClientProps) {
+  const router = useRouter()
+  const isProactive = !!proactive
+
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
@@ -37,7 +41,7 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
     el.style.height = Math.min(el.scrollHeight, 96) + "px"
   }, [input])
 
-  // Load chat history on mount
+  // Load chat history on mount; inject proactive greeting if no history
   useEffect(() => {
     fetch("/api/ai/chat")
       .then((r) => r.json())
@@ -45,6 +49,10 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
         if (data.messages?.length > 0) {
           setMessages(data.messages)
           setSessionId(data.sessionId)
+        } else if (isProactive) {
+          const greeting = sessionStorage.getItem("vibe_proactive_greeting")
+          sessionStorage.removeItem("vibe_proactive_greeting")
+          if (greeting) setMessages([{ role: "assistant", content: greeting }])
         }
       })
       .catch(() => {})
@@ -141,9 +149,13 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
     <div className="max-w-2xl mx-auto flex flex-col" style={{ height: "calc(100vh - 8rem)" }}>
       {/* Header */}
       <div className="mb-4 flex-shrink-0 flex items-center gap-3">
-        <Link href="/dashboard" className="lg:hidden w-9 h-9 flex items-center justify-center rounded-xl hover:bg-cream-200 transition-colors flex-shrink-0" aria-label="Voltar">
+        <button
+          onClick={() => router.push("/dashboard")}
+          className={`w-9 h-9 flex items-center justify-center rounded-xl hover:bg-cream-200 transition-colors flex-shrink-0 ${isProactive ? "" : "lg:hidden"}`}
+          aria-label="Voltar"
+        >
           <ArrowLeft className="w-5 h-5 text-foreground/60" />
-        </Link>
+        </button>
         <div>
           <h1 className="font-display font-bold text-2xl text-foreground">Chat com Vibe</h1>
           <p className="text-sm text-foreground/50 mt-1">Sua assistente virtual de bem-estar.</p>

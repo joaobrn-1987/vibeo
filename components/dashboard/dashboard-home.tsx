@@ -1,4 +1,6 @@
 "use client"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Heart, TrendingUp, Calendar, Flame, Star, ChevronRight, Shield, AlertCircle, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -40,6 +42,25 @@ const riskBadgeVariant: Record<string, "stable" | "attention" | "high" | "immedi
 
 export function DashboardHome({ user, aiEnabled }: DashboardHomeProps) {
   const greeting = getGreeting()
+  const router = useRouter()
+
+  // Proactive chat: check once per session if Vibe should reach out
+  useEffect(() => {
+    if (!aiEnabled) return
+    const SESSION_KEY = "vibe_proactive_checked"
+    if (sessionStorage.getItem(SESSION_KEY)) return
+    sessionStorage.setItem(SESSION_KEY, "1")
+
+    fetch("/api/ai/chat/proactive")
+      .then((r) => r.json())
+      .then((data: { shouldEngage: boolean; greeting: string }) => {
+        if (data.shouldEngage && data.greeting) {
+          sessionStorage.setItem("vibe_proactive_greeting", data.greeting)
+          router.push("/dashboard/chat?vibe=proactive")
+        }
+      })
+      .catch(() => {})
+  }, [aiEnabled])
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-fade-in">
