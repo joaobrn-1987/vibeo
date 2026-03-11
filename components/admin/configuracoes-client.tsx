@@ -166,7 +166,7 @@ export function ConfiguracoesClient({
 
   async function clearAI() {
     if (!confirm("Limpar todas as configurações de integração de IA? A chave e o modelo serão removidos.")) return
-    setAiApiKey(""); setAiModel(""); setAiEnabled(false); setTestResult(null); setAiMsg(null)
+    setAiApiKey(""); setAiModel("claude-haiku-4-5-20251001"); setAiProvider("anthropic"); setAiEnabled(false); setTestResult(null); setAiMsg(null)
     await fetch("/api/admin/ia-integracao", {
       method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

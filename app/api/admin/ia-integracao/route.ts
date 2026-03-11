@@ -63,10 +63,18 @@ export async function POST(req: NextRequest) {
   }
 
   const { apiKey, model, provider, action } = await req.json()
-  if (action !== "test" || !apiKey || !model) {
+  if (action !== "test" || !apiKey) {
     return NextResponse.json({ error: "Dados inválidos." }, { status: 400 })
   }
 
-  const result = await testAIConnection(apiKey, model, provider || "anthropic")
+  const resolvedProvider = provider || "anthropic"
+  const defaultModels: Record<string, string> = {
+    anthropic: "claude-haiku-4-5-20251001",
+    grok: "grok-4-1-fast-non-reasoning",
+    openai: "gpt-4o-mini",
+  }
+  const resolvedModel = model || defaultModels[resolvedProvider] || "claude-haiku-4-5-20251001"
+
+  const result = await testAIConnection(apiKey, resolvedModel, resolvedProvider)
   return NextResponse.json(result)
 }

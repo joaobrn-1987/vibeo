@@ -158,8 +158,10 @@ function friendlyAIError(err: any, provider = "anthropic"): string {
   if (status === 429 || msg.includes("rate_limit") || msg.includes("Rate limit")) {
     return "Limite de requisições atingido. Tente novamente em alguns instantes."
   }
-  if (status === 400 && msg.includes("credit")) {
-    return "Saldo insuficiente. Verifique o plano da sua conta."
+  if (status === 400) {
+    if (msg.includes("credit")) return "Saldo insuficiente. Verifique o plano da sua conta."
+    if (msg.includes("model")) return `Modelo inválido ou não disponível no seu plano. Selecione outro modelo.`
+    return msg ? `Erro 400: ${msg}` : "Requisição inválida (400). Verifique o modelo e a chave de API."
   }
   return msg || "Erro ao comunicar com a IA."
 }
