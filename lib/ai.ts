@@ -108,8 +108,28 @@ export async function sendToAI(
     return { success: false, error: "Resposta inesperada da IA." }
   } catch (err: any) {
     console.error("AI error:", err)
-    return { success: false, error: err?.message || "Erro ao comunicar com a IA." }
+    return { success: false, error: friendlyAIError(err) }
   }
+}
+
+function friendlyAIError(err: any): string {
+  const msg: string = err?.message || err?.error?.message || ""
+  if (msg.includes("credit balance is too low") || msg.includes("insufficient_quota")) {
+    return "Saldo insuficiente na conta Anthropic. Adicione créditos em console.anthropic.com/settings/billing."
+  }
+  if (msg.includes("invalid x-api-key") || msg.includes("authentication_error") || err?.status === 401) {
+    return "Chave de API inválida. Verifique a chave em Configurações › Integração de IA."
+  }
+  if (msg.includes("rate_limit") || err?.status === 429) {
+    return "Limite de requisições atingido. Tente novamente em alguns instantes."
+  }
+  if (err?.status === 400) {
+    const detail = err?.error?.message || msg
+    if (detail.includes("credit")) {
+      return "Saldo insuficiente na conta Anthropic. Adicione créditos em console.anthropic.com/settings/billing."
+    }
+  }
+  return msg || "Erro ao comunicar com a IA."
 }
 
 /** Tests the AI connection with a simple message */
@@ -123,10 +143,10 @@ export async function testAIConnection(apiKey: string, model: string): Promise<{
     })
     const content = response.content[0]
     if (content.type === "text") {
-      return { success: true, message: `Conexão OK. Resposta: "${content.text.trim()}"` }
+      return { success: true, message: `Conexão OK! Modelo respondeu: "${content.text.trim()}"` }
     }
-    return { success: false, message: "Resposta inesperada." }
+    return { success: false, message: "Resposta inesperada da API." }
   } catch (err: any) {
-    return { success: false, message: err?.message || "Falha na conexão." }
+    return { success: false, message: friendlyAIError(err) }
   }
 }
