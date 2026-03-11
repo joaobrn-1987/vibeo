@@ -288,7 +288,7 @@ export function ConfiguracoesClient({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {[
                 { value: "anthropic", label: "Anthropic", sub: "Claude", recommended: false, defaultModel: "claude-haiku-4-5-20251001" },
-                { value: "grok", label: "xAI", sub: "Grok · gratuito", recommended: true, defaultModel: "grok-4-1-fast-non-reasoning" },
+                { value: "grok", label: "xAI", sub: "Grok", recommended: false, defaultModel: "grok-4-1-fast-non-reasoning" },
                 { value: "openai", label: "OpenAI", sub: "GPT", recommended: false, defaultModel: "gpt-4o-mini" },
               ].map((p) => (
                 <button key={p.value} onClick={() => { setAiProvider(p.value); setAiModel(p.defaultModel) }}
