@@ -17,10 +17,10 @@ const ANTHROPIC_MODELS = [
   { value: "claude-opus-4-6", label: "Claude Opus 4.6 – Mais poderoso" },
 ]
 
-const GROK_MODELS = [
-  { value: "grok-4-1-fast-non-reasoning", label: "Grok 4.1 Fast – Rápido, sem raciocínio (recomendado)" },
-  { value: "grok-4-1-fast-reasoning", label: "Grok 4.1 Fast Reasoning – Com raciocínio" },
-  { value: "grok-code-fast-1", label: "Grok Code Fast – Especializado em código" },
+const GEMINI_MODELS = [
+  { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash – Rápido e gratuito (recomendado)" },
+  { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash – Rápido e gratuito" },
+  { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro – Mais capaz" },
 ]
 
 interface Props {
@@ -169,7 +169,7 @@ export function ConfiguracoesClient({
 
   async function clearAI() {
     if (!confirm("Limpar todas as configurações de integração de IA? A chave e o modelo serão removidos.")) return
-    setAiApiKey(""); setAiModel("claude-haiku-4-5-20251001"); setAiProvider("anthropic"); setAiEnabled(false); setTestResult(null); setAiMsg(null)
+    setAiApiKey(""); setAiModel("gemini-2.0-flash"); setAiProvider("gemini"); setAiEnabled(false); setTestResult(null); setAiMsg(null); setAvailableModels(null)
     await fetch("/api/admin/ia-integracao", {
       method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -301,17 +301,16 @@ export function ConfiguracoesClient({
           {/* Provider */}
           <div>
             <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wide mb-2 block">Provedor</label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[
-                { value: "anthropic", label: "Anthropic", sub: "Claude", recommended: false, defaultModel: "claude-haiku-4-5-20251001" },
-                { value: "grok", label: "xAI", sub: "Grok", recommended: false, defaultModel: "grok-4-1-fast-non-reasoning" },
-                { value: "openai", label: "OpenAI", sub: "GPT", recommended: false, defaultModel: "gpt-4o-mini" },
+                { value: "gemini", label: "Google Gemini", sub: "Gratuito · aistudio.google.com", free: true, defaultModel: "gemini-2.0-flash" },
+                { value: "openai", label: "OpenAI", sub: "GPT · pago", free: false, defaultModel: "gpt-4o-mini" },
               ].map((p) => (
-                <button key={p.value} onClick={() => { setAiProvider(p.value); setAiModel(p.defaultModel) }}
+                <button key={p.value} onClick={() => { setAiProvider(p.value); setAiModel(p.defaultModel); setAvailableModels(null) }}
                   className={`p-3 rounded-xl border-2 text-left transition-all ${aiProvider === p.value ? "border-purple-400 bg-purple-50" : "border-cream-200 hover:border-purple-200"}`}>
                   <div className="flex items-center justify-between gap-1 flex-wrap">
                     <span className="text-sm font-semibold text-foreground">{p.label}</span>
-                    {p.recommended && <span className="text-xs px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full">grátis</span>}
+                    {p.free && <span className="text-xs px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full">grátis</span>}
                   </div>
                   <p className="text-xs text-foreground/50 mt-0.5">{p.sub}</p>
                 </button>
@@ -322,12 +321,12 @@ export function ConfiguracoesClient({
           {/* API Key */}
           <div>
             <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wide mb-1.5 block">
-              {aiProvider === "anthropic" ? "Anthropic API Key" : aiProvider === "grok" ? "xAI API Key" : "OpenAI API Key"}
+              {aiProvider === "gemini" ? "Google AI Studio API Key" : "OpenAI API Key"}
             </label>
             <div className="relative">
               <input type={showApiKey ? "text" : "password"} value={aiApiKey}
                 onChange={(e) => setAiApiKey(e.target.value)}
-                placeholder={aiProvider === "anthropic" ? "sk-ant-api03-..." : aiProvider === "grok" ? "xai-..." : "sk-..."}
+                placeholder={aiProvider === "gemini" ? "AIza..." : "sk-..."}
                 className="w-full px-4 py-2.5 pr-10 rounded-xl border border-cream-200 bg-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-300" />
               <button type="button" onClick={() => setShowApiKey(!showApiKey)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/30 hover:text-foreground/60">
@@ -338,14 +337,8 @@ export function ConfiguracoesClient({
               <Info className="w-3 h-3 text-foreground/40 flex-shrink-0" />
               <p className="text-xs text-foreground/40">
                 Armazenada com segurança no banco de dados.
-                {aiProvider === "anthropic" && (
-                  <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer"
-                    className="ml-1 text-purple-500 hover:underline inline-flex items-center gap-0.5">
-                    Obter chave <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
-                {aiProvider === "grok" && (
-                  <a href="https://console.x.ai" target="_blank" rel="noopener noreferrer"
+                {aiProvider === "gemini" && (
+                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer"
                     className="ml-1 text-purple-500 hover:underline inline-flex items-center gap-0.5">
                     Obter chave grátis <ExternalLink className="w-3 h-3" />
                   </a>
@@ -357,46 +350,14 @@ export function ConfiguracoesClient({
           {/* Model */}
           <div>
             <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wide mb-2 block">Modelo</label>
-            {aiProvider === "anthropic" ? (
+            {aiProvider === "gemini" ? (
               <div className="space-y-2">
-                {ANTHROPIC_MODELS.map((m) => (
+                {GEMINI_MODELS.map((m) => (
                   <label key={m.value} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${aiModel === m.value ? "border-purple-300 bg-purple-50" : "border-cream-200 hover:border-purple-200"}`}>
                     <input type="radio" name="aiModel" value={m.value} checked={aiModel === m.value} onChange={() => setAiModel(m.value)} className="accent-purple-500" />
                     <span className="text-sm text-foreground">{m.label}</span>
                   </label>
                 ))}
-              </div>
-            ) : aiProvider === "grok" ? (
-              <div className="space-y-2">
-                {GROK_MODELS.map((m) => (
-                  <label key={m.value} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${aiModel === m.value ? "border-purple-300 bg-purple-50" : "border-cream-200 hover:border-purple-200"}`}>
-                    <input type="radio" name="aiModel" value={m.value} checked={aiModel === m.value} onChange={() => setAiModel(m.value)} className="accent-purple-500" />
-                    <span className="text-sm text-foreground">{m.label}</span>
-                  </label>
-                ))}
-                <div className="pt-1 space-y-2">
-                  <p className="text-xs text-foreground/40">Ou digite o ID exato do modelo:</p>
-                  <input type="text" value={GROK_MODELS.some(m => m.value === aiModel) ? "" : aiModel}
-                    onChange={(e) => setAiModel(e.target.value)}
-                    placeholder="ex: grok-3-mini-beta"
-                    className="w-full px-4 py-2.5 rounded-xl border border-cream-200 bg-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-300" />
-                  <Button type="button" variant="outline" size="sm" onClick={listModels} disabled={listingModels || !aiApiKey.trim()}>
-                    {listingModels ? <><Loader2 className="w-4 h-4 animate-spin" /> Consultando...</> : "Ver modelos disponíveis na minha conta"}
-                  </Button>
-                  {listModelsError && <p className="text-xs text-red-500">{listModelsError}</p>}
-                  {availableModels && (
-                    <div className="bg-cream-50 border border-cream-200 rounded-xl p-3 space-y-1">
-                      <p className="text-xs font-semibold text-foreground/50 mb-2">Modelos disponíveis ({availableModels.length}):</p>
-                      {availableModels.length === 0 && <p className="text-xs text-foreground/40">Nenhum modelo encontrado.</p>}
-                      {availableModels.map((m) => (
-                        <button key={m} onClick={() => setAiModel(m)}
-                          className={`block w-full text-left px-3 py-1.5 rounded-lg text-xs font-mono transition-colors ${aiModel === m ? "bg-purple-100 text-purple-700" : "hover:bg-cream-200 text-foreground/70"}`}>
-                          {m}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
             ) : (
               <input type="text" value={aiModel} onChange={(e) => setAiModel(e.target.value)} placeholder="gpt-4o-mini"

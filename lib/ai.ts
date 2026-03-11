@@ -23,8 +23,8 @@ export async function getAISettings(): Promise<AISettings> {
   return {
     enabled: map["AI_ENABLED"] === "true",
     apiKey: map["AI_API_KEY"] || "",
-    model: map["AI_MODEL"] || "claude-haiku-4-5-20251001",
-    provider: map["AI_PROVIDER"] || "anthropic",
+    model: map["AI_MODEL"] || "gemini-2.0-flash",
+    provider: map["AI_PROVIDER"] || "gemini",
   }
 }
 
@@ -127,10 +127,11 @@ export async function sendToAI(
     let text: string
     if (settings.provider === "anthropic") {
       text = await callAnthropic(settings.apiKey, settings.model, systemPrompt, messages, maxTokens, temperature)
+    } else if (settings.provider === "gemini") {
+      text = await callOpenAICompatible(settings.apiKey, settings.model, "https://generativelanguage.googleapis.com/v1beta/openai", systemPrompt, messages, maxTokens, temperature)
     } else if (settings.provider === "grok") {
       text = await callOpenAICompatible(settings.apiKey, settings.model, "https://api.x.ai/v1", systemPrompt, messages, maxTokens, temperature)
     } else {
-      // openai or custom
       text = await callOpenAICompatible(settings.apiKey, settings.model, "https://api.openai.com/v1", systemPrompt, messages, maxTokens, temperature)
     }
     return { success: true, content: text }
@@ -175,6 +176,8 @@ export async function testAIConnection(
     let text: string
     if (provider === "anthropic") {
       text = await callAnthropic(apiKey, model, "Você é um assistente.", [{ role: "user", content: "Diga apenas: ok" }], 32, 0.1)
+    } else if (provider === "gemini") {
+      text = await callOpenAICompatible(apiKey, model, "https://generativelanguage.googleapis.com/v1beta/openai", "Você é um assistente.", [{ role: "user", content: "Diga apenas: ok" }], 32, 0.1)
     } else if (provider === "grok") {
       text = await callOpenAICompatible(apiKey, model, "https://api.x.ai/v1", "Você é um assistente.", [{ role: "user", content: "Diga apenas: ok" }], 32, 0.1)
     } else {

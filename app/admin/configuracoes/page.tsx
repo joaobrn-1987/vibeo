@@ -30,8 +30,8 @@ export default async function ConfiguracoesPage() {
       smtpFrom={settingsMap["SMTP_FROM"] || ""}
       aiEnabled={settingsMap["AI_ENABLED"] === "true"}
       aiApiKey={settingsMap["AI_API_KEY"] || ""}
-      aiModel={settingsMap["AI_MODEL"] || "claude-haiku-4-5-20251001"}
-      aiProvider={settingsMap["AI_PROVIDER"] || "anthropic"}
+      aiModel={settingsMap["AI_MODEL"] || "gemini-2.0-flash"}
+      aiProvider={settingsMap["AI_PROVIDER"] || "gemini"}
     />
   )
 }

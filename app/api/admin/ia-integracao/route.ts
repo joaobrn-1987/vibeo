@@ -83,10 +83,10 @@ export async function POST(req: NextRequest) {
 
   if (action !== "test") return NextResponse.json({ error: "Dados inválidos." }, { status: 400 })
 
-  const resolvedProvider = provider || "anthropic"
+  const resolvedProvider = provider || "gemini"
   const defaultModels: Record<string, string> = {
+    gemini: "gemini-2.0-flash",
     anthropic: "claude-haiku-4-5-20251001",
-    grok: "grok-4-1-fast-non-reasoning",
     openai: "gpt-4o-mini",
   }
   const resolvedModel = model || defaultModels[resolvedProvider] || "claude-haiku-4-5-20251001"
