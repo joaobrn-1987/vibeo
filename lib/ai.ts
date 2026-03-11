@@ -23,7 +23,7 @@ export async function getAISettings(): Promise<AISettings> {
   return {
     enabled: map["AI_ENABLED"] === "true",
     apiKey: map["AI_API_KEY"] || "",
-    model: map["AI_MODEL"] || "gemini-2.0-flash",
+    model: map["AI_MODEL"] || "gemini-2.5-flash-lite",
     provider: map["AI_PROVIDER"] || "gemini",
   }
 }
