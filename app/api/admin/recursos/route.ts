@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json()
   const parse = schema.safeParse(body)
-  if (!parse.success) return NextResponse.json({ error: "Dados inválidos.", details: parse.error.errors }, { status: 400 })
+  if (!parse.success) return NextResponse.json({ error: "Dados inválidos." }, { status: 400 })
 
   const { url, ...rest } = parse.data
   const resource = await prisma.supportResource.create({

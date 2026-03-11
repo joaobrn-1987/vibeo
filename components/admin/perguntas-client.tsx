@@ -98,7 +98,13 @@ export function PerguntasClient({ categories: initial }: { categories: Category[
       if (editingQ) {
         setCategories((prev) => prev.map((c) => ({
           ...c,
-          questions: c.questions.map((q) => q.id === editingQ.id ? { ...q, ...qForm } : q),
+          questions: c.questions.map((q) => q.id === editingQ.id ? {
+            ...q,
+            text: qForm.text, shortLabel: qForm.shortLabel, type: qForm.type,
+            weight: qForm.weight, order: qForm.order, isActive: qForm.isActive,
+            minAge: qForm.minAge ? parseInt(String(qForm.minAge)) : null,
+            maxAge: qForm.maxAge ? parseInt(String(qForm.maxAge)) : null,
+          } : q),
         })))
       } else {
         setCategories((prev) => prev.map((c) => c.id === categoryId ? { ...c, questions: [...c.questions, data.question] } : c))
