@@ -1,23 +1,27 @@
+export const dynamic = "force-dynamic"
+export const metadata = { title: "Configurações – Admin" }
+
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { ConfiguracoesClient } from "@/components/admin/configuracoes-client"
 
-export const dynamic = "force-dynamic"
-export const metadata = { title: "Configurações – Admin" }
-
 export default async function ConfiguracoesPage() {
   const session = await getServerSession(authOptions)
   if (!session) redirect("/login")
   if (session.user.role !== "MASTER_ADMIN") redirect("/admin")
 
-  const settings = await prisma.systemSetting.findMany({ orderBy: { key: "asc" } })
+  const [settings, profile] = await Promise.all([
+    prisma.systemSetting.findMany({ orderBy: { key: "asc" } }),
+    prisma.profile.findUnique({ where: { userId: session.user.id }, select: { fullName: true } }),
+  ])
   const settingsMap = Object.fromEntries(settings.map((s) => [s.key, s.value]))
 
   return (
     <ConfiguracoesClient
       currentEmail={session.user.email!}
+      currentName={profile?.fullName || session.user.name || ""}
       registrationsBlocked={settingsMap["REGISTRATIONS_BLOCKED"] === "true"}
       smtpHost={settingsMap["SMTP_HOST"] || ""}
       smtpPort={settingsMap["SMTP_PORT"] || "587"}

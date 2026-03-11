@@ -25,6 +25,7 @@ const GROK_MODELS = [
 
 interface Props {
   currentEmail: string
+  currentName: string
   registrationsBlocked: boolean
   smtpHost: string
   smtpPort: string
@@ -39,6 +40,7 @@ interface Props {
 
 export function ConfiguracoesClient({
   currentEmail,
+  currentName,
   registrationsBlocked: initialBlocked,
   smtpHost: initialHost,
   smtpPort: initialPort,
@@ -56,10 +58,21 @@ export function ConfiguracoesClient({
   const [blocked, setBlocked] = useState(initialBlocked)
   const [blockSaving, setBlockSaving] = useState(false)
 
+  // Master name
+  const [newName, setNewName] = useState(currentName)
+  const [nameSaving, setNameSaving] = useState(false)
+  const [nameMsg, setNameMsg] = useState<{ ok: boolean; text: string } | null>(null)
+
   // Master email
   const [newEmail, setNewEmail] = useState(currentEmail)
   const [emailSaving, setEmailSaving] = useState(false)
   const [emailMsg, setEmailMsg] = useState<{ ok: boolean; text: string } | null>(null)
+
+  // Master password
+  const [pwForm, setPwForm] = useState({ current: "", next: "", confirm: "" })
+  const [showPw, setShowPw] = useState(false)
+  const [pwSaving, setPwSaving] = useState(false)
+  const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
   // SMTP
   const [smtp, setSmtp] = useState({ host: initialHost, port: initialPort, user: initialUser, pass: initialPass, from: initialFrom })
@@ -93,6 +106,32 @@ export function ConfiguracoesClient({
     const ok = await saveSetting("REGISTRATIONS_BLOCKED", String(newVal))
     if (ok) { setBlocked(newVal); router.refresh() }
     setBlockSaving(false)
+  }
+
+  async function saveName(e: React.FormEvent) {
+    e.preventDefault(); setNameSaving(true); setNameMsg(null)
+    const res = await fetch("/api/admin/account", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "name", fullName: newName }),
+    })
+    if (res.ok) { setNameMsg({ ok: true, text: "Nome atualizado com sucesso!" }) }
+    else { const d = await res.json(); setNameMsg({ ok: false, text: d.error || "Erro ao salvar." }) }
+    setNameSaving(false)
+  }
+
+  async function savePassword(e: React.FormEvent) {
+    e.preventDefault()
+    if (pwForm.next !== pwForm.confirm) { setPwMsg({ ok: false, text: "As senhas não conferem." }); return }
+    if (pwForm.next.length < 8) { setPwMsg({ ok: false, text: "Mínimo 8 caracteres." }); return }
+    setPwSaving(true); setPwMsg(null)
+    const res = await fetch("/api/admin/account", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "password", currentPassword: pwForm.current, newPassword: pwForm.next }),
+    })
+    const data = await res.json()
+    if (res.ok) { setPwMsg({ ok: true, text: "Senha alterada com sucesso!" }); setPwForm({ current: "", next: "", confirm: "" }) }
+    else { setPwMsg({ ok: false, text: data.error || "Erro ao alterar senha." }) }
+    setPwSaving(false)
   }
 
   async function saveEmail(e: React.FormEvent) {
@@ -248,11 +287,11 @@ export function ConfiguracoesClient({
             <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wide mb-2 block">Provedor</label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {[
-                { value: "anthropic", label: "Anthropic", sub: "Claude", recommended: false },
-                { value: "grok", label: "xAI", sub: "Grok · gratuito", recommended: true },
-                { value: "openai", label: "OpenAI", sub: "GPT", recommended: false },
+                { value: "anthropic", label: "Anthropic", sub: "Claude", recommended: false, defaultModel: "claude-haiku-4-5-20251001" },
+                { value: "grok", label: "xAI", sub: "Grok · gratuito", recommended: true, defaultModel: "grok-3-mini-beta" },
+                { value: "openai", label: "OpenAI", sub: "GPT", recommended: false, defaultModel: "gpt-4o-mini" },
               ].map((p) => (
-                <button key={p.value} onClick={() => { setAiProvider(p.value); setAiModel("") }}
+                <button key={p.value} onClick={() => { setAiProvider(p.value); setAiModel(p.defaultModel) }}
                   className={`p-3 rounded-xl border-2 text-left transition-all ${aiProvider === p.value ? "border-purple-400 bg-purple-50" : "border-cream-200 hover:border-purple-200"}`}>
                   <div className="flex items-center justify-between gap-1 flex-wrap">
                     <span className="text-sm font-semibold text-foreground">{p.label}</span>
@@ -357,6 +396,82 @@ export function ConfiguracoesClient({
               Limpar configurações
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Master Admin Name */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Settings className="w-5 h-5 text-primary-500" />
+            Nome do Master Admin
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <form onSubmit={saveName} className="space-y-3">
+            <div>
+              <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wide mb-1.5 block">Nome</label>
+              <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} minLength={2} required
+                className="w-full px-4 py-2.5 rounded-xl border border-cream-200 bg-white text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" />
+            </div>
+            {nameMsg && (
+              <p className={`text-sm px-4 py-2.5 rounded-xl flex items-center gap-2 ${nameMsg.ok ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+                {nameMsg.ok ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                {nameMsg.text}
+              </p>
+            )}
+            <Button type="submit" disabled={nameSaving || newName.trim() === currentName} size="sm">
+              <Save className="w-4 h-4" />
+              {nameSaving ? "Salvando..." : "Salvar nome"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Master Admin Password */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Lock className="w-5 h-5 text-primary-500" />
+            Alterar senha do Master Admin
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <form onSubmit={savePassword} className="space-y-3">
+            <div>
+              <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wide mb-1.5 block">Senha atual</label>
+              <div className="relative">
+                <input type={showPw ? "text" : "password"} value={pwForm.current} onChange={(e) => setPwForm({ ...pwForm, current: e.target.value })} required
+                  className="w-full px-4 py-2.5 pr-10 rounded-xl border border-cream-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" />
+                <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/30 hover:text-foreground/60">
+                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wide mb-1.5 block">Nova senha</label>
+                <input type="password" value={pwForm.next} onChange={(e) => setPwForm({ ...pwForm, next: e.target.value })} minLength={8} required
+                  className="w-full px-4 py-2.5 rounded-xl border border-cream-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wide mb-1.5 block">Confirmar</label>
+                <input type="password" value={pwForm.confirm} onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })} required
+                  className="w-full px-4 py-2.5 rounded-xl border border-cream-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" />
+              </div>
+            </div>
+            <p className="text-xs text-foreground/40">Mínimo 8 caracteres</p>
+            {pwMsg && (
+              <p className={`text-sm px-4 py-2.5 rounded-xl flex items-center gap-2 ${pwMsg.ok ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+                {pwMsg.ok ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                {pwMsg.text}
+              </p>
+            )}
+            <Button type="submit" disabled={pwSaving || !pwForm.current || !pwForm.next || !pwForm.confirm} size="sm">
+              <Lock className="w-4 h-4" />
+              {pwSaving ? "Alterando..." : "Alterar senha"}
+            </Button>
+          </form>
         </CardContent>
       </Card>
 

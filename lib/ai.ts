@@ -151,8 +151,9 @@ function friendlyAIError(err: any, provider = "anthropic"): string {
       ? "Saldo insuficiente na conta Anthropic. Adicione créditos em console.anthropic.com/settings/billing."
       : "Saldo insuficiente. Verifique o plano da sua conta."
   }
-  if (status === 401 || msg.includes("invalid x-api-key") || msg.includes("authentication_error") || msg.includes("Incorrect API key")) {
-    return "Chave de API inválida. Verifique a chave em Configurações › Integração de IA."
+  if (status === 401 || status === 403 || msg.includes("invalid x-api-key") || msg.includes("authentication_error") || msg.includes("Incorrect API key") || msg.includes("Unauthorized") || msg.includes("Forbidden")) {
+    const providerName = provider === "grok" ? "xAI (console.x.ai)" : provider === "anthropic" ? "Anthropic" : "OpenAI"
+    return `Acesso negado (${status || "403"}). Verifique se a chave é válida e tem permissão para o modelo selecionado. Obtenha a chave em ${providerName}.`
   }
   if (status === 429 || msg.includes("rate_limit") || msg.includes("Rate limit")) {
     return "Limite de requisições atingido. Tente novamente em alguns instantes."

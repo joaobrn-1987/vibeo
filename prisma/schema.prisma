@@ -99,6 +99,7 @@ model Profile {
   user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   fullName          String
+  socialName        String?
   birthDate         DateTime
   age               Int
   theme             ThemeChoice @default(FEMININE)
