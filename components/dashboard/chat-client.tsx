@@ -20,6 +20,8 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [loadingHistory, setLoadingHistory] = useState(true)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -35,6 +37,20 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
     el.style.height = Math.min(el.scrollHeight, 96) + "px"
   }, [input])
 
+  // Load chat history on mount
+  useEffect(() => {
+    fetch("/api/ai/chat")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.messages?.length > 0) {
+          setMessages(data.messages)
+          setSessionId(data.sessionId)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingHistory(false))
+  }, [])
+
   async function sendMessage() {
     const text = input.trim()
     if (!text || loading) return
@@ -49,13 +65,14 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({ messages: newMessages, sessionId }),
       })
       const data = await res.json()
       if (!res.ok || !data.content) {
         setError(data.error || "Erro ao conectar com a Vibe.")
       } else {
         setMessages([...newMessages, { role: "assistant", content: data.content }])
+        if (data.sessionId) setSessionId(data.sessionId)
       }
     } catch {
       setError("Erro de rede. Verifique sua conexão.")
@@ -76,13 +93,14 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({ messages: newMessages, sessionId }),
       })
       const data = await res.json()
       if (!res.ok || !data.content) {
         setError(data.error || "Erro ao conectar com a Vibe.")
       } else {
         setMessages([...newMessages, { role: "assistant", content: data.content }])
+        if (data.sessionId) setSessionId(data.sessionId)
       }
     } catch {
       setError("Erro de rede. Verifique sua conexão.")
@@ -132,7 +150,12 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
 
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto space-y-4 pr-1 mb-4">
-        {messages.length === 0 && (
+        {loadingHistory ? (
+          <div className="flex flex-col items-center justify-center h-full text-center px-4 gap-3">
+            <Loader2 className="w-8 h-8 text-primary-400 animate-spin" />
+            <p className="text-sm text-foreground/40">Carregando conversa...</p>
+          </div>
+        ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-4 gap-4">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-400 to-accent-400 flex items-center justify-center">
               <MessageCircle className="w-8 h-8 text-white" />
@@ -155,7 +178,7 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {messages.map((msg, i) => (
           <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>

@@ -201,6 +201,48 @@ function friendlyAIError(err: any, provider = "gemini"): string {
   return msg || "Erro ao comunicar com a IA."
 }
 
+// ─── Chat risk assessment ─────────────────────────────────────────────────────
+
+const RISK_KEYWORDS = {
+  IMMEDIATE_PRIORITY: [
+    "me matar", "quero morrer", "vou me matar", "suicídio", "suicidar",
+    "acabar com tudo", "tirar minha vida", "não quero mais viver", "me suicidar",
+    "quero me matar", "pensar em suicídio", "tentativa de suicídio",
+  ],
+  HIGH_RISK: [
+    "me machucar", "me ferir", "automutilação", "cortar o pulso", "cortar meu",
+    "não aguento mais", "quero desaparecer", "pensamentos de morte", "morrer",
+    "sem motivo para viver", "ninguém vai sentir minha falta", "não tem saída",
+  ],
+  ATTENTION: [
+    "muito triste", "desesperado", "sem esperança", "deprimido", "muito ansioso",
+    "ataque de pânico", "sem saída", "não consigo dormir", "chorando muito",
+    "me sinto péssimo", "me sinto horrível", "completamente perdido",
+  ],
+}
+
+export function assessChatRisk(userMessages: string[]): { riskLevel: string; flags: string[] } {
+  const text = userMessages.join(" ").toLowerCase()
+  const flags: string[] = []
+
+  for (const kw of RISK_KEYWORDS.IMMEDIATE_PRIORITY) {
+    if (text.includes(kw)) flags.push(kw)
+  }
+  if (flags.length > 0) return { riskLevel: "IMMEDIATE_PRIORITY", flags }
+
+  for (const kw of RISK_KEYWORDS.HIGH_RISK) {
+    if (text.includes(kw)) flags.push(kw)
+  }
+  if (flags.length > 0) return { riskLevel: "HIGH_RISK", flags }
+
+  for (const kw of RISK_KEYWORDS.ATTENTION) {
+    if (text.includes(kw)) flags.push(kw)
+  }
+  if (flags.length > 0) return { riskLevel: "ATTENTION", flags }
+
+  return { riskLevel: "STABLE", flags: [] }
+}
+
 // ─── Test connection ──────────────────────────────────────────────────────────
 
 export async function testAIConnection(
