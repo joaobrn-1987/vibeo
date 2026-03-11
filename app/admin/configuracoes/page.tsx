@@ -32,6 +32,7 @@ export default async function ConfiguracoesPage() {
       aiApiKey={settingsMap["AI_API_KEY"] || ""}
       aiModel={settingsMap["AI_MODEL"] || "gemini-2.5-flash-lite"}
       aiProvider={settingsMap["AI_PROVIDER"] || "gemini"}
+      timezone={settingsMap["TIMEZONE"] || "America/Sao_Paulo"}
     />
   )
 }

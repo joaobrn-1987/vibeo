@@ -1,7 +1,6 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { format, formatDistanceToNow, differenceInYears } from "date-fns"
-import { ptBR } from "date-fns/locale"
+import { differenceInYears } from "date-fns"
 import crypto from "crypto"
 
 export function cn(...inputs: ClassValue[]) {
@@ -16,14 +15,42 @@ export function isMinor(birthDate: Date): boolean {
   return calculateAge(birthDate) < 18
 }
 
-export function formatDate(date: Date | string, fmt: string = "dd/MM/yyyy"): string {
+const DEFAULT_TZ = process.env.TZ || 'America/Sao_Paulo'
+
+export function formatDate(date: Date | string, fmt: string = "dd/MM/yyyy", tz: string = DEFAULT_TZ): string {
   const d = typeof date === "string" ? new Date(date) : date
-  return format(d, fmt, { locale: ptBR })
+  if (fmt === "dd/MM/yyyy") {
+    return new Intl.DateTimeFormat("pt-BR", { timeZone: tz, day: "2-digit", month: "2-digit", year: "numeric" }).format(d)
+  }
+  if (fmt === "dd/MM/yyyy HH:mm") {
+    return new Intl.DateTimeFormat("pt-BR", { timeZone: tz, day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(d)
+  }
+  if (fmt === "HH:mm") {
+    return new Intl.DateTimeFormat("pt-BR", { timeZone: tz, hour: "2-digit", minute: "2-digit" }).format(d)
+  }
+  if (fmt === "EEEE, dd/MM/yyyy") {
+    return new Intl.DateTimeFormat("pt-BR", { timeZone: tz, weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" }).format(d)
+  }
+  if (fmt === "EEEE, dd/MM/yyyy HH:mm") {
+    return new Intl.DateTimeFormat("pt-BR", { timeZone: tz, weekday: "long", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(d)
+  }
+  // fallback genérico
+  return new Intl.DateTimeFormat("pt-BR", { timeZone: tz, dateStyle: "short" }).format(d)
 }
 
-export function formatRelative(date: Date | string): string {
+export function formatRelative(date: Date | string, tz: string = DEFAULT_TZ): string {
   const d = typeof date === "string" ? new Date(date) : date
-  return formatDistanceToNow(d, { addSuffix: true, locale: ptBR })
+  const now = new Date()
+  const diffMs = now.getTime() - d.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+  if (diffMins < 1) return "agora mesmo"
+  if (diffMins < 60) return `há ${diffMins} minuto${diffMins > 1 ? "s" : ""}`
+  if (diffHours < 24) return `há ${diffHours} hora${diffHours > 1 ? "s" : ""}`
+  if (diffDays === 1) return "ontem"
+  if (diffDays < 7) return `há ${diffDays} dias`
+  return formatDate(d, "dd/MM/yyyy", tz)
 }
 
 export function generateToken(length: number = 32): string {

@@ -2,10 +2,11 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { History, Calendar } from "lucide-react"
+import { History, Calendar, ChevronRight } from "lucide-react"
 import { formatDate, getRiskLevelLabel } from "@/lib/utils"
+import Link from "next/link"
 
 export const metadata = { title: "Histórico" }
 
@@ -54,34 +55,39 @@ export default async function HistoricoPage() {
       ) : (
         <div className="space-y-3">
           {checkIns.map((c) => (
-            <Card key={c.id}>
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="text-3xl">{moodEmoji[c.overallMood || 5]}</div>
-                    <div>
-                      <p className="font-semibold text-foreground text-sm">
-                        {formatDate(c.createdAt, "EEEE, dd/MM/yyyy")}
-                      </p>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        <span className="text-xs text-foreground/40">Humor: <strong>{c.overallMood}/10</strong></span>
-                        {c.energyLevel && <span className="text-xs text-foreground/40">Energia: <strong>{c.energyLevel}/10</strong></span>}
-                        {c.anxietyLevel && <span className="text-xs text-foreground/40">Ansiedade: <strong>{c.anxietyLevel}/10</strong></span>}
-                        {c.dominantFeeling && <span className="text-xs text-foreground/40">{c.dominantFeeling}</span>}
+            <Link key={c.id} href={`/dashboard/historico/${c.id}`}>
+              <Card className="hover:border-primary-200 hover:shadow-sm transition-all cursor-pointer">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="text-3xl">{moodEmoji[c.overallMood || 5]}</div>
+                      <div>
+                        <p className="font-semibold text-foreground text-sm">
+                          {formatDate(c.createdAt, "EEEE, dd/MM/yyyy HH:mm")}
+                        </p>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          <span className="text-xs text-foreground/40">Humor: <strong>{c.overallMood}/10</strong></span>
+                          {c.energyLevel && <span className="text-xs text-foreground/40">Energia: <strong>{c.energyLevel}/10</strong></span>}
+                          {c.anxietyLevel && <span className="text-xs text-foreground/40">Ansiedade: <strong>{c.anxietyLevel}/10</strong></span>}
+                          {c.dominantFeeling && <span className="text-xs text-foreground/40">{c.dominantFeeling}</span>}
+                        </div>
                       </div>
                     </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={riskVariant[c.riskLevel || "STABLE"] || "stable"}>
+                        {getRiskLevelLabel(c.riskLevel || "STABLE")}
+                      </Badge>
+                      <ChevronRight className="w-4 h-4 text-foreground/30" />
+                    </div>
                   </div>
-                  <Badge variant={riskVariant[c.riskLevel || "STABLE"] || "stable"}>
-                    {getRiskLevelLabel(c.riskLevel || "STABLE")}
-                  </Badge>
-                </div>
-                {c.freeText && (
-                  <p className="mt-3 text-sm text-foreground/60 bg-cream-100 rounded-xl p-3 leading-relaxed italic">
-                    "{c.freeText}"
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+                  {c.freeText && (
+                    <p className="mt-3 text-sm text-foreground/60 bg-cream-100 rounded-xl p-3 leading-relaxed italic">
+                      "{c.freeText}"
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}

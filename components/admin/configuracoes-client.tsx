@@ -6,10 +6,21 @@ import { signOut } from "next-auth/react"
 import Link from "next/link"
 import {
   Settings, Mail, Lock, ToggleLeft, ToggleRight, Save, AlertTriangle,
-  Check, Eye, EyeOff, ArrowLeft, Zap, TestTube, Loader2, ExternalLink, Info, Trash2
+  Check, Eye, EyeOff, ArrowLeft, Zap, TestTube, Loader2, ExternalLink, Info, Trash2, Globe
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+
+const TIMEZONES = [
+  { value: "America/Sao_Paulo", label: "Brasília / São Paulo (UTC-3)" },
+  { value: "America/Manaus", label: "Manaus (UTC-4)" },
+  { value: "America/Belem", label: "Belém (UTC-3)" },
+  { value: "America/Fortaleza", label: "Fortaleza (UTC-3)" },
+  { value: "America/Recife", label: "Recife (UTC-3)" },
+  { value: "America/Noronha", label: "Fernando de Noronha (UTC-2)" },
+  { value: "America/Rio_Branco", label: "Rio Branco (UTC-5)" },
+  { value: "UTC", label: "UTC (GMT+0)" },
+]
 
 const ANTHROPIC_MODELS = [
   { value: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5 – Rápido e econômico (recomendado)" },
@@ -41,6 +52,7 @@ interface Props {
   aiApiKey: string
   aiModel: string
   aiProvider: string
+  timezone: string
 }
 
 export function ConfiguracoesClient({
@@ -56,6 +68,7 @@ export function ConfiguracoesClient({
   aiApiKey: initialApiKey,
   aiModel: initialModel,
   aiProvider: initialProvider,
+  timezone: initialTimezone,
 }: Props) {
   const router = useRouter()
 
@@ -85,6 +98,11 @@ export function ConfiguracoesClient({
   const [smtpSaving, setSmtpSaving] = useState(false)
   const [smtpMsg, setSmtpMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
+  // Timezone
+  const [timezone, setTimezone] = useState(initialTimezone)
+  const [timezoneSaving, setTimezoneSaving] = useState(false)
+  const [timezoneMsg, setTimezoneMsg] = useState<{ ok: boolean; text: string } | null>(null)
+
   // AI Integration
   const [aiEnabled, setAiEnabled] = useState(initialAiEnabled)
   const [aiApiKey, setAiApiKey] = useState(initialApiKey)
@@ -98,6 +116,22 @@ export function ConfiguracoesClient({
   const [listingModels, setListingModels] = useState(false)
   const [availableModels, setAvailableModels] = useState<string[] | null>(null)
   const [listModelsError, setListModelsError] = useState<string | null>(null)
+
+  async function saveTimezone() {
+    setTimezoneSaving(true); setTimezoneMsg(null)
+    const res = await fetch("/api/admin/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: "TIMEZONE", value: timezone }),
+    })
+    if (res.ok) {
+      setTimezoneMsg({ ok: true, text: "Fuso horário salvo com sucesso!" })
+      router.refresh()
+    } else {
+      setTimezoneMsg({ ok: false, text: "Erro ao salvar fuso horário." })
+    }
+    setTimezoneSaving(false)
+  }
 
   async function saveSetting(key: string, value: string) {
     const res = await fetch("/api/admin/settings", {
@@ -508,6 +542,43 @@ export function ConfiguracoesClient({
               {emailSaving ? "Salvando..." : "Salvar novo e-mail"}
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      {/* Timezone */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Globe className="w-5 h-5 text-primary-500" />
+            Fuso horário
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0 space-y-4">
+          <p className="text-sm text-foreground/60">
+            Define o fuso horário usado para exibição de datas e horários em todo o sistema.
+          </p>
+          <div>
+            <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wide mb-1.5 block">Fuso horário do sistema</label>
+            <select
+              value={timezone}
+              onChange={(e) => setTimezone(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-cream-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-300"
+            >
+              {TIMEZONES.map((tz) => (
+                <option key={tz.value} value={tz.value}>{tz.label}</option>
+              ))}
+            </select>
+          </div>
+          {timezoneMsg && (
+            <p className={`text-sm px-4 py-2.5 rounded-xl flex items-center gap-2 ${timezoneMsg.ok ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+              {timezoneMsg.ok ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+              {timezoneMsg.text}
+            </p>
+          )}
+          <Button onClick={saveTimezone} disabled={timezoneSaving} size="sm">
+            <Save className="w-4 h-4" />
+            {timezoneSaving ? "Salvando..." : "Salvar fuso horário"}
+          </Button>
         </CardContent>
       </Card>
 

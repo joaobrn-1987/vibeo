@@ -12,6 +12,7 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 3000,
+        TZ: 'America/Sao_Paulo',
       },
       env_file: '/opt/vibeo/.env',
       log_date_format: 'YYYY-MM-DD HH:mm:ss',
