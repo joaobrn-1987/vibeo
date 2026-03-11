@@ -83,7 +83,8 @@ async function callAnthropic(
 async function callOpenAICompatible(
   apiKey: string, model: string, baseUrl: string, systemPrompt: string,
   messages: Array<{ role: "user" | "assistant"; content: string }>,
-  maxTokens: number, temperature: number
+  maxTokens: number, temperature: number,
+  retries = 3
 ): Promise<string> {
   const body = {
     model,
@@ -91,20 +92,36 @@ async function callOpenAICompatible(
     temperature,
     messages: [{ role: "system", content: systemPrompt }, ...messages],
   }
-  const res = await fetch(`${baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) {
-    const errData = await res.json().catch(() => ({}))
-    const errMsg = errData?.error?.message || `HTTP ${res.status}`
-    throw Object.assign(new Error(errMsg), { status: res.status, provider: baseUrl.includes("x.ai") ? "grok" : "openai", errorData: errData })
+  const providerName = baseUrl.includes("x.ai") ? "grok" : baseUrl.includes("googleapis") ? "gemini" : "openai"
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify(body),
+    })
+
+    if (res.status === 429 && attempt < retries) {
+      const retryAfter = parseInt(res.headers.get("retry-after") || "0") * 1000
+      const backoff = retryAfter || Math.pow(2, attempt + 1) * 1000
+      console.warn(`AI rate limit (429), retry ${attempt + 1}/${retries} after ${backoff}ms`)
+      await new Promise((resolve) => setTimeout(resolve, backoff))
+      continue
+    }
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}))
+      const errMsg = errData?.error?.message || `HTTP ${res.status}`
+      throw Object.assign(new Error(errMsg), { status: res.status, provider: providerName, errorData: errData })
+    }
+
+    const data = await res.json()
+    const text = data?.choices?.[0]?.message?.content
+    if (!text) throw new Error("Resposta inesperada da API.")
+    return text
   }
-  const data = await res.json()
-  const text = data?.choices?.[0]?.message?.content
-  if (!text) throw new Error("Resposta inesperada da API.")
-  return text
+
+  throw Object.assign(new Error("HTTP 429"), { status: 429, provider: providerName, errorData: {} })
 }
 
 // ─── Main send function ───────────────────────────────────────────────────────
