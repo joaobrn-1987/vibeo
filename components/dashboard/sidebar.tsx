@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Heart, LayoutDashboard, Calendar, History, Settings, LogOut, HelpCircle, User, TrendingUp, X } from "lucide-react"
+import { Heart, LayoutDashboard, Calendar, History, LogOut, HelpCircle, User, TrendingUp, X, MessageCircle } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import { useSidebar } from "./sidebar-context"
@@ -15,9 +15,9 @@ const navItems = [
   { href: "/dashboard/check-in", icon: Calendar, label: "Check-in diário" },
   { href: "/dashboard/historico", icon: History, label: "Histórico" },
   { href: "/dashboard/evolucao", icon: TrendingUp, label: "Evolução" },
+  { href: "/dashboard/chat", icon: MessageCircle, label: "Chat com Vibe" },
   { href: "/dashboard/apoio", icon: HelpCircle, label: "Recursos de apoio" },
   { href: "/dashboard/perfil", icon: User, label: "Perfil" },
-  { href: "/dashboard/configuracoes", icon: Settings, label: "Configurações" },
 ]
 
 export function DashboardSidebar({ user }: SidebarProps) {

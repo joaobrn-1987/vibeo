@@ -18,9 +18,9 @@ const ANTHROPIC_MODELS = [
 ]
 
 const GROK_MODELS = [
-  { value: "grok-3-mini-beta", label: "Grok 3 Mini – Gratuito, rápido (recomendado)" },
-  { value: "grok-2-1212", label: "Grok 2 – Mais capaz" },
-  { value: "grok-3-beta", label: "Grok 3 – Mais avançado" },
+  { value: "grok-4-1-fast-non-reasoning", label: "Grok 4.1 Fast – Rápido, sem raciocínio (recomendado)" },
+  { value: "grok-4-1-fast-reasoning", label: "Grok 4.1 Fast Reasoning – Com raciocínio" },
+  { value: "grok-code-fast-1", label: "Grok Code Fast – Especializado em código" },
 ]
 
 interface Props {
@@ -288,7 +288,7 @@ export function ConfiguracoesClient({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {[
                 { value: "anthropic", label: "Anthropic", sub: "Claude", recommended: false, defaultModel: "claude-haiku-4-5-20251001" },
-                { value: "grok", label: "xAI", sub: "Grok · gratuito", recommended: true, defaultModel: "grok-3-mini-beta" },
+                { value: "grok", label: "xAI", sub: "Grok · gratuito", recommended: true, defaultModel: "grok-4-1-fast-non-reasoning" },
                 { value: "openai", label: "OpenAI", sub: "GPT", recommended: false, defaultModel: "gpt-4o-mini" },
               ].map((p) => (
                 <button key={p.value} onClick={() => { setAiProvider(p.value); setAiModel(p.defaultModel) }}
