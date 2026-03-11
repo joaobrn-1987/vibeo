@@ -143,9 +143,10 @@ export async function sendToAI(
 
 // ─── Error handling ───────────────────────────────────────────────────────────
 
-function friendlyAIError(err: any, provider = "anthropic"): string {
-  const msg: string = err?.message || err?.errorData?.error?.message || ""
+function friendlyAIError(err: any, provider = "gemini"): string {
+  const msg: string = err?.message || err?.errorData?.error?.message || err?.errorData?.error?.status || ""
   const status: number = err?.status || 0
+  console.error("AI error detail:", { status, msg, provider, errorData: err?.errorData })
 
   if (msg.includes("credit balance is too low") || msg.includes("insufficient_quota")) {
     return provider === "anthropic"
@@ -177,7 +178,7 @@ export async function testAIConnection(
     if (provider === "anthropic") {
       text = await callAnthropic(apiKey, model, "Você é um assistente.", [{ role: "user", content: "Diga apenas: ok" }], 32, 0.1)
     } else if (provider === "gemini") {
-      text = await callOpenAICompatible(apiKey, model, "https://generativelanguage.googleapis.com/v1beta/openai", "Você é um assistente.", [{ role: "user", content: "Diga apenas: ok" }], 32, 0.1)
+      text = await callOpenAICompatible(apiKey, model, "https://generativelanguage.googleapis.com/v1beta/openai", "Você é um assistente.", [{ role: "user", content: "Diga apenas: ok" }], 64, 0.1)
     } else if (provider === "grok") {
       text = await callOpenAICompatible(apiKey, model, "https://api.x.ai/v1", "Você é um assistente.", [{ role: "user", content: "Diga apenas: ok" }], 32, 0.1)
     } else {
