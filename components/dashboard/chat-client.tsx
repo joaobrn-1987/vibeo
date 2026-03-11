@@ -1,8 +1,9 @@
 "use client"
 import { useState, useRef, useEffect } from "react"
-import { Send, Loader2, MessageCircle, Bot, User } from "lucide-react"
+import { Send, Loader2, MessageCircle, Bot, User, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import Link from "next/link"
 
 interface Message {
   role: "user" | "assistant"
@@ -119,9 +120,14 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-8rem)]">
-      <div className="mb-4 flex-shrink-0">
-        <h1 className="font-display font-bold text-2xl text-foreground">Chat com Vibe</h1>
-        <p className="text-sm text-foreground/50 mt-1">Sua assistente virtual de bem-estar.</p>
+      <div className="mb-4 flex-shrink-0 flex items-center gap-3">
+        <Link href="/dashboard" className="lg:hidden w-9 h-9 flex items-center justify-center rounded-xl hover:bg-cream-200 transition-colors flex-shrink-0" aria-label="Voltar">
+          <ArrowLeft className="w-5 h-5 text-foreground/60" />
+        </Link>
+        <div>
+          <h1 className="font-display font-bold text-2xl text-foreground">Chat com Vibe</h1>
+          <p className="text-sm text-foreground/50 mt-1">Sua assistente virtual de bem-estar.</p>
+        </div>
       </div>
 
       {/* Messages area */}
