@@ -66,6 +66,21 @@ function buildContextBlock(userContext?: { riskLevel?: string; recentMood?: numb
   return ctx + "]"
 }
 
+// ─── Simple rate limiter (15 RPM = 1 req per 4s for Gemini free tier) ─────────
+
+const rateLimiter = {
+  lastCallAt: 0,
+  minIntervalMs: 4100, // slightly above 4s to stay safely under 15 RPM
+  async throttle() {
+    const now = Date.now()
+    const wait = this.minIntervalMs - (now - this.lastCallAt)
+    if (wait > 0) {
+      await new Promise((resolve) => setTimeout(resolve, wait))
+    }
+    this.lastCallAt = Date.now()
+  },
+}
+
 // ─── Provider implementations ────────────────────────────────────────────────
 
 async function callAnthropic(
@@ -145,6 +160,7 @@ export async function sendToAI(
     if (settings.provider === "anthropic") {
       text = await callAnthropic(settings.apiKey, settings.model, systemPrompt, messages, maxTokens, temperature)
     } else if (settings.provider === "gemini") {
+      await rateLimiter.throttle()
       text = await callOpenAICompatible(settings.apiKey, settings.model, "https://generativelanguage.googleapis.com/v1beta/openai", systemPrompt, messages, maxTokens, temperature)
     } else if (settings.provider === "grok") {
       text = await callOpenAICompatible(settings.apiKey, settings.model, "https://api.x.ai/v1", systemPrompt, messages, maxTokens, temperature)

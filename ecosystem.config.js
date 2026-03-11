@@ -2,8 +2,8 @@ module.exports = {
   apps: [
     {
       name: 'vibeo',
-      script: 'node_modules/.bin/next',
-      args: 'start',
+      script: 'node',
+      args: '.next/standalone/server.js',
       cwd: '/opt/vibeo',
       instances: 1,
       autorestart: true,
