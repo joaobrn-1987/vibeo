@@ -1,6 +1,6 @@
 "use client"
 import Link from "next/link"
-import { Heart, TrendingUp, Calendar, Flame, Star, ChevronRight, Shield, AlertCircle } from "lucide-react"
+import { Heart, TrendingUp, Calendar, Flame, Star, ChevronRight, Shield, AlertCircle, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -21,6 +21,7 @@ interface DashboardHomeProps {
     chartData: Array<{ day: string; humor: number; energia: number; sono: number }>
     lastCheckIn: { mood: number | null; dominantFeeling: string | null; createdAt: string } | null
   }
+  aiEnabled?: boolean
 }
 
 function getGreeting() {
@@ -37,7 +38,7 @@ const riskBadgeVariant: Record<string, "stable" | "attention" | "high" | "immedi
   IMMEDIATE_PRIORITY: "immediate",
 }
 
-export function DashboardHome({ user }: DashboardHomeProps) {
+export function DashboardHome({ user, aiEnabled }: DashboardHomeProps) {
   const greeting = getGreeting()
 
   return (
@@ -75,6 +76,22 @@ export function DashboardHome({ user }: DashboardHomeProps) {
             </p>
           </div>
         </div>
+      )}
+
+      {/* Chat with Vibe CTA — only when AI is enabled */}
+      {aiEnabled && (
+        <Link href="/dashboard/chat">
+          <div className="flex items-center gap-4 p-5 rounded-2xl bg-gradient-to-r from-primary-500 to-accent-500 text-white shadow-md hover:shadow-lg transition-shadow cursor-pointer">
+            <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center flex-shrink-0">
+              <MessageCircle className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-base leading-tight">Converse com a Vibe</p>
+              <p className="text-sm text-white/80 mt-0.5">Sua assistente de bem-estar está aqui para te ouvir</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-white/70 flex-shrink-0" />
+          </div>
+        </Link>
       )}
 
       {/* Stats row */}

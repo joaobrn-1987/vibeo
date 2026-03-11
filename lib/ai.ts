@@ -205,19 +205,43 @@ function friendlyAIError(err: any, provider = "gemini"): string {
 
 export async function testAIConnection(
   apiKey: string, model: string, provider: string
-): Promise<{ success: boolean; message: string }> {
+): Promise<{ success: boolean; message: string; actualModel?: string }> {
   try {
-    let text: string
     if (provider === "anthropic") {
-      text = await callAnthropic(apiKey, model, "Você é um assistente.", [{ role: "user", content: "Diga apenas: ok" }], 32, 0.1)
-    } else if (provider === "gemini") {
-      text = await callOpenAICompatible(apiKey, model, "https://generativelanguage.googleapis.com/v1beta/openai", "Você é um assistente.", [{ role: "user", content: "Diga apenas: ok" }], 64, 0.1)
-    } else if (provider === "grok") {
-      text = await callOpenAICompatible(apiKey, model, "https://api.x.ai/v1", "Você é um assistente.", [{ role: "user", content: "Diga apenas: ok" }], 32, 0.1)
-    } else {
-      text = await callOpenAICompatible(apiKey, model, "https://api.openai.com/v1", "Você é um assistente.", [{ role: "user", content: "Diga apenas: ok" }], 32, 0.1)
+      const text = await callAnthropic(apiKey, model, "Você é um assistente.", [{ role: "user", content: "Diga apenas: ok" }], 32, 0.1)
+      return { success: true, message: `Conexão OK! Modelo respondeu: "${text.trim()}"`, actualModel: model }
     }
-    return { success: true, message: `Conexão OK! Modelo respondeu: "${text.trim()}"` }
+
+    // For OpenAI-compatible providers, capture the actual model from the response
+    const baseUrl =
+      provider === "gemini" ? "https://generativelanguage.googleapis.com/v1beta/openai"
+      : provider === "grok" ? "https://api.x.ai/v1"
+      : "https://api.openai.com/v1"
+
+    const res = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model,
+        max_tokens: 64,
+        temperature: 0.1,
+        messages: [
+          { role: "system", content: "Você é um assistente." },
+          { role: "user", content: "Diga apenas: ok" },
+        ],
+      }),
+    })
+
+    const data = await res.json()
+    if (!res.ok) {
+      const errMsg = data?.error?.message || `HTTP ${res.status}`
+      throw Object.assign(new Error(errMsg), { status: res.status, provider, errorData: data })
+    }
+
+    const text = data?.choices?.[0]?.message?.content || ""
+    const actualModel: string = data?.model || model
+
+    return { success: true, message: `Conexão OK! Modelo respondeu: "${text.trim()}"`, actualModel }
   } catch (err: any) {
     return { success: false, message: friendlyAIError(err, provider) }
   }

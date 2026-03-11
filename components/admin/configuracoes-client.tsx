@@ -24,6 +24,10 @@ const GEMINI_MODELS = [
   { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash – Gratuito (cota limitada)" },
 ]
 
+const ALL_MODEL_LABELS: Record<string, string> = Object.fromEntries(
+  [...ANTHROPIC_MODELS, ...GEMINI_MODELS].map((m) => [m.value, m.label])
+)
+
 interface Props {
   currentEmail: string
   currentName: string
@@ -90,7 +94,7 @@ export function ConfiguracoesClient({
   const [aiSaving, setAiSaving] = useState(false)
   const [aiMsg, setAiMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [testing, setTesting] = useState(false)
-  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string; actualModel?: string } | null>(null)
   const [listingModels, setListingModels] = useState(false)
   const [availableModels, setAvailableModels] = useState<string[] | null>(null)
   const [listModelsError, setListModelsError] = useState<string | null>(null)
@@ -375,7 +379,14 @@ export function ConfiguracoesClient({
             {testResult && (
               <div className={`mt-3 flex items-start gap-2 px-3 py-2.5 rounded-xl text-sm border ${testResult.success ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200"}`}>
                 {testResult.success ? <Check className="w-4 h-4 flex-shrink-0 mt-0.5" /> : <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />}
-                {testResult.message}
+                <div>
+                  <p>{testResult.message}</p>
+                  {testResult.success && testResult.actualModel && (
+                    <p className="text-xs mt-1 opacity-75">
+                      Modelo em uso: <strong>{ALL_MODEL_LABELS[testResult.actualModel] || testResult.actualModel}</strong>
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </div>

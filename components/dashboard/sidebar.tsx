@@ -8,19 +8,27 @@ import { useSidebar } from "./sidebar-context"
 
 interface SidebarProps {
   user: { name?: string | null; email?: string | null; theme?: string; role?: string }
+  aiEnabled?: boolean
 }
 
-const navItems = [
+const baseNavItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Início" },
   { href: "/dashboard/check-in", icon: Calendar, label: "Check-in diário" },
   { href: "/dashboard/historico", icon: History, label: "Histórico" },
   { href: "/dashboard/evolucao", icon: TrendingUp, label: "Evolução" },
-  { href: "/dashboard/chat", icon: MessageCircle, label: "Chat com Vibe" },
+]
+
+const chatNavItem = { href: "/dashboard/chat", icon: MessageCircle, label: "Chat com Vibe" }
+
+const bottomNavItems = [
   { href: "/dashboard/apoio", icon: HelpCircle, label: "Recursos de apoio" },
   { href: "/dashboard/perfil", icon: User, label: "Perfil" },
 ]
 
-export function DashboardSidebar({ user }: SidebarProps) {
+export function DashboardSidebar({ user, aiEnabled }: SidebarProps) {
+  const navItems = aiEnabled
+    ? [...baseNavItems, chatNavItem, ...bottomNavItems]
+    : [...baseNavItems, ...bottomNavItems]
   const pathname = usePathname()
   const { isOpen, close } = useSidebar()
 

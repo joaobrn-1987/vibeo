@@ -26,6 +26,14 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages, loading])
 
+  // Auto-resize textarea whenever input changes
+  useEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    el.style.height = "auto"
+    el.style.height = Math.min(el.scrollHeight, 96) + "px"
+  }, [input])
+
   async function sendMessage() {
     const text = input.trim()
     if (!text || loading) return
@@ -53,6 +61,32 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
     } finally {
       setLoading(false)
       setTimeout(() => inputRef.current?.focus(), 50)
+    }
+  }
+
+  async function sendSuggestion(text: string) {
+    if (loading) return
+    const newMessages: Message[] = [...messages, { role: "user", content: text }]
+    setMessages(newMessages)
+    setInput("")
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: newMessages }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.content) {
+        setError(data.error || "Erro ao conectar com a Vibe.")
+      } else {
+        setMessages([...newMessages, { role: "assistant", content: data.content }])
+      }
+    } catch {
+      setError("Erro de rede. Verifique sua conexão.")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -107,7 +141,7 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
               {["Como estou me sentindo hoje", "Preciso de ajuda para relaxar", "Me sinto ansioso(a)", "Quero conversar"].map((suggestion) => (
                 <button
                   key={suggestion}
-                  onClick={() => { setInput(suggestion); inputRef.current?.focus() }}
+                  onClick={() => sendSuggestion(suggestion)}
                   className="text-xs px-3 py-1.5 bg-primary-50 text-primary-600 rounded-full border border-primary-200 hover:bg-primary-100 transition-colors"
                 >
                   {suggestion}
@@ -133,7 +167,7 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
             <div className={`max-w-[78%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
               msg.role === "assistant"
                 ? "bg-white border border-cream-200 text-foreground rounded-tl-sm"
-                : "bg-primary-500 text-white rounded-tr-sm"
+                : "bg-primary-700 text-white rounded-tr-sm"
             }`}>
               {msg.content}
             </div>
@@ -171,10 +205,10 @@ export function ChatClient({ aiEnabled, displayName }: ChatClientProps) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Escreva uma mensagem… (Enter para enviar)"
+          placeholder="Escreva uma mensagem…"
           rows={1}
-          className="flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-foreground/30 outline-none px-2 py-2 max-h-32 overflow-y-auto"
-          style={{ minHeight: "2.5rem" }}
+          className="flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-foreground/30 outline-none px-2 py-2 overflow-y-auto"
+          style={{ minHeight: "2.5rem", maxHeight: "6rem" }}
           disabled={loading}
         />
         <Button
