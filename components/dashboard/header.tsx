@@ -1,6 +1,7 @@
 "use client"
 import Link from "next/link"
-import { Bell, Heart, Menu } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Bell, Heart, Menu, ShieldCheck } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSidebar } from "./sidebar-context"
 import { useSession } from "next-auth/react"
@@ -12,8 +13,10 @@ interface HeaderProps {
 export function DashboardHeader({ user }: HeaderProps) {
   const { toggle } = useSidebar()
   const { data: session } = useSession()
+  const router = useRouter()
   const displayName = session?.user?.name ?? user.name
   const avatarImage = (session?.user as any)?.image ?? null
+  const isAdmin = user.role === "ADMIN" || user.role === "MASTER_ADMIN"
 
   return (
     <header className="sticky top-0 z-30 glass border-b border-cream-200 px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -41,6 +44,16 @@ export function DashboardHeader({ user }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-3 ml-auto">
+        {/* Admin panel link — only for admin roles */}
+        {isAdmin && (
+          <button
+            onClick={() => router.push("/admin")}
+            className="flex items-center gap-1.5 text-xs text-primary-600 hover:text-primary-800 transition-colors font-medium"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span className="hidden sm:inline">Painel Admin</span>
+          </button>
+        )}
         <button className="w-10 h-10 rounded-xl bg-cream-100 hover:bg-cream-200 flex items-center justify-center transition-colors relative">
           <Bell className="w-4 h-4 text-foreground/60" />
         </button>

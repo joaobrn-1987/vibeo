@@ -1,11 +1,12 @@
 "use client"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Bell, Home, Menu } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useAdminSidebar } from "./sidebar-context"
 
 export function AdminHeader({ user }: { user: any }) {
   const { toggle } = useAdminSidebar()
+  const router = useRouter()
 
   return (
     <header className="sticky top-0 z-30 glass border-b border-cream-200 px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -23,10 +24,13 @@ export function AdminHeader({ user }: { user: any }) {
       </div>
 
       <div className="flex items-center gap-3 ml-auto">
-        <Link href="/dashboard" className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground transition-colors">
+        <button
+          onClick={() => router.push("/dashboard")}
+          className="flex items-center gap-1.5 text-xs text-foreground/50 hover:text-foreground transition-colors"
+        >
           <Home className="w-4 h-4" />
           <span className="hidden sm:inline">Área do usuário</span>
-        </Link>
+        </button>
         <button className="w-10 h-10 rounded-xl bg-cream-100 hover:bg-cream-200 flex items-center justify-center transition-colors">
           <Bell className="w-4 h-4 text-foreground/60" />
         </button>
