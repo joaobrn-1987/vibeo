@@ -358,6 +358,13 @@ export function ConfiguracoesClient({
                     <span className="text-sm text-foreground">{m.label}</span>
                   </label>
                 ))}
+                <div className="pt-1">
+                  <p className="text-xs text-foreground/40 mb-1">Ou digite o ID exato do modelo (conforme aparece na documentação da xAI):</p>
+                  <input type="text" value={GROK_MODELS.some(m => m.value === aiModel) ? "" : aiModel}
+                    onChange={(e) => setAiModel(e.target.value)}
+                    placeholder="ex: grok-3-mini-beta"
+                    className="w-full px-4 py-2.5 rounded-xl border border-cream-200 bg-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-300" />
+                </div>
               </div>
             ) : (
               <input type="text" value={aiModel} onChange={(e) => setAiModel(e.target.value)} placeholder="gpt-4o-mini"
