@@ -3,7 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
-import { Settings, Mail, Lock, ToggleLeft, ToggleRight, Save, AlertTriangle, Check, Eye, EyeOff } from "lucide-react"
+import Link from "next/link"
+import { Settings, Mail, Lock, ToggleLeft, ToggleRight, Save, AlertTriangle, Check, Eye, EyeOff, ArrowLeft } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
@@ -110,13 +111,21 @@ export function ConfiguracoesClient({
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary-50 border border-primary-100 flex items-center justify-center">
-          <Settings className="w-5 h-5 text-primary-600" />
-        </div>
-        <div>
-          <h1 className="font-display font-bold text-2xl text-foreground">Configurações do sistema</h1>
-          <p className="text-sm text-foreground/50">Apenas o Master Admin pode acessar esta seção.</p>
+      <div className="flex items-start gap-3">
+        <div className="flex-1">
+          <Link href="/admin" className="inline-flex items-center gap-1.5 text-sm text-foreground/50 hover:text-foreground transition-colors mb-3">
+            <ArrowLeft className="w-4 h-4" />
+            Voltar ao painel
+          </Link>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary-50 border border-primary-100 flex items-center justify-center">
+              <Settings className="w-5 h-5 text-primary-600" />
+            </div>
+            <div>
+              <h1 className="font-display font-bold text-2xl text-foreground">Configurações do sistema</h1>
+              <p className="text-sm text-foreground/50">Apenas o Master Admin pode acessar esta seção.</p>
+            </div>
+          </div>
         </div>
       </div>
 
