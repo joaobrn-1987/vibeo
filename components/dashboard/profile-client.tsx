@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { formatDate } from "@/lib/utils"
 import { signOut, useSession } from "next-auth/react"
 
@@ -364,7 +363,7 @@ export function ProfileClient({ user }: ProfileClientProps) {
           ) : (
             <div className="space-y-4">
               <div>
-                <Label htmlFor="fullName">Nome completo</Label>
+                <label htmlFor="fullName" className="text-sm font-medium text-foreground">Nome completo</label>
                 <Input
                   id="fullName"
                   value={fullName}
@@ -374,7 +373,7 @@ export function ProfileClient({ user }: ProfileClientProps) {
                 />
               </div>
               <div>
-                <Label htmlFor="socialName">Nome social <span className="text-foreground/40 text-xs font-normal">(opcional)</span></Label>
+                <label htmlFor="socialName" className="text-sm font-medium text-foreground">Nome social <span className="text-foreground/40 text-xs font-normal">(opcional)</span></label>
                 <Input
                   id="socialName"
                   value={socialName}
@@ -500,7 +499,7 @@ export function ProfileClient({ user }: ProfileClientProps) {
         </CardHeader>
         <CardContent className="p-6 pt-0 space-y-4">
           <div>
-            <Label htmlFor="currentPassword">Senha atual</Label>
+            <label htmlFor="currentPassword" className="text-sm font-medium text-foreground">Senha atual</label>
             <Input
               id="currentPassword"
               type="password"
@@ -511,7 +510,7 @@ export function ProfileClient({ user }: ProfileClientProps) {
             />
           </div>
           <div>
-            <Label htmlFor="newPassword">Nova senha</Label>
+            <label htmlFor="newPassword" className="text-sm font-medium text-foreground">Nova senha</label>
             <Input
               id="newPassword"
               type="password"
@@ -522,7 +521,7 @@ export function ProfileClient({ user }: ProfileClientProps) {
             />
           </div>
           <div>
-            <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+            <label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">Confirmar nova senha</label>
             <Input
               id="confirmPassword"
               type="password"
