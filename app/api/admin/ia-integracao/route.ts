@@ -62,11 +62,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Acesso negado." }, { status: 403 })
   }
 
-  const { apiKey, model, action } = await req.json()
+  const { apiKey, model, provider, action } = await req.json()
   if (action !== "test" || !apiKey || !model) {
     return NextResponse.json({ error: "Dados inválidos." }, { status: 400 })
   }
 
-  const result = await testAIConnection(apiKey, model)
+  const result = await testAIConnection(apiKey, model, provider || "anthropic")
   return NextResponse.json(result)
 }

@@ -53,100 +53,132 @@ export function buildSystemPrompt(configs: AIConfig[]): string {
     : basePrompt
 }
 
+/** Builds user context block */
+function buildContextBlock(userContext?: { riskLevel?: string; recentMood?: number; streakDays?: number }): string {
+  if (!userContext?.riskLevel) return ""
+  const riskLabels: Record<string, string> = {
+    STABLE: "Estável", ATTENTION: "Atenção",
+    HIGH_RISK: "Alto risco", IMMEDIATE_PRIORITY: "Prioridade imediata",
+  }
+  let ctx = `\n[Contexto do usuário: nível de bem-estar = ${riskLabels[userContext.riskLevel] || userContext.riskLevel}`
+  if (userContext.recentMood) ctx += `, humor recente = ${userContext.recentMood}/10`
+  if (userContext.streakDays) ctx += `, sequência = ${userContext.streakDays} dias`
+  return ctx + "]"
+}
+
+// ─── Provider implementations ────────────────────────────────────────────────
+
+async function callAnthropic(
+  apiKey: string, model: string, systemPrompt: string,
+  messages: Array<{ role: "user" | "assistant"; content: string }>,
+  maxTokens: number, temperature: number
+): Promise<string> {
+  const client = new Anthropic({ apiKey })
+  const response = await client.messages.create({ model, max_tokens: maxTokens, temperature, system: systemPrompt, messages })
+  const content = response.content[0]
+  if (content.type === "text") return content.text
+  throw new Error("Resposta inesperada da API Anthropic.")
+}
+
+async function callOpenAICompatible(
+  apiKey: string, model: string, baseUrl: string, systemPrompt: string,
+  messages: Array<{ role: "user" | "assistant"; content: string }>,
+  maxTokens: number, temperature: number
+): Promise<string> {
+  const body = {
+    model,
+    max_tokens: maxTokens,
+    temperature,
+    messages: [{ role: "system", content: systemPrompt }, ...messages],
+  }
+  const res = await fetch(`${baseUrl}/chat/completions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}))
+    const errMsg = errData?.error?.message || `HTTP ${res.status}`
+    throw Object.assign(new Error(errMsg), { status: res.status, provider: baseUrl.includes("x.ai") ? "grok" : "openai", errorData: errData })
+  }
+  const data = await res.json()
+  const text = data?.choices?.[0]?.message?.content
+  if (!text) throw new Error("Resposta inesperada da API.")
+  return text
+}
+
+// ─── Main send function ───────────────────────────────────────────────────────
+
 /** Sends a message to the AI and returns the response */
 export async function sendToAI(
   messages: Array<{ role: "user" | "assistant"; content: string }>,
-  userContext?: {
-    riskLevel?: string
-    recentMood?: number
-    streakDays?: number
-  }
+  userContext?: { riskLevel?: string; recentMood?: number; streakDays?: number }
 ): Promise<{ success: true; content: string } | { success: false; error: string }> {
   const [settings, configs] = await Promise.all([getAISettings(), getActiveAIConfigs()])
 
-  if (!settings.enabled) {
-    return { success: false, error: "Integração de IA não está ativada." }
-  }
-  if (!settings.apiKey) {
-    return { success: false, error: "Chave de API não configurada." }
-  }
+  if (!settings.enabled) return { success: false, error: "Integração de IA não está ativada." }
+  if (!settings.apiKey) return { success: false, error: "Chave de API não configurada." }
 
-  const systemPrompt = buildSystemPrompt(configs)
-  const maxTokensConfig = configs.find((c) => c.key === "MAX_TOKENS")
-  const temperatureConfig = configs.find((c) => c.key === "TEMPERATURE")
-  const maxTokens = maxTokensConfig ? parseInt(maxTokensConfig.value) || 1024 : 1024
-  const temperature = temperatureConfig ? parseFloat(temperatureConfig.value) || 0.7 : 0.7
-
-  // Build context block if provided
-  let contextBlock = ""
-  if (userContext?.riskLevel) {
-    const riskLabels: Record<string, string> = {
-      STABLE: "Estável", ATTENTION: "Atenção",
-      HIGH_RISK: "Alto risco", IMMEDIATE_PRIORITY: "Prioridade imediata",
-    }
-    contextBlock += `\n[Contexto do usuário: nível de bem-estar = ${riskLabels[userContext.riskLevel] || userContext.riskLevel}`
-    if (userContext.recentMood) contextBlock += `, humor recente = ${userContext.recentMood}/10`
-    if (userContext.streakDays) contextBlock += `, sequência = ${userContext.streakDays} dias`
-    contextBlock += `]`
-  }
+  const systemPrompt = buildSystemPrompt(configs) + buildContextBlock(userContext)
+  const maxTokens = parseInt(configs.find((c) => c.key === "MAX_TOKENS")?.value || "1024") || 1024
+  const temperature = parseFloat(configs.find((c) => c.key === "TEMPERATURE")?.value || "0.7") || 0.7
 
   try {
-    const client = new Anthropic({ apiKey: settings.apiKey })
-
-    const response = await client.messages.create({
-      model: settings.model,
-      max_tokens: maxTokens,
-      temperature,
-      system: contextBlock ? systemPrompt + contextBlock : systemPrompt,
-      messages,
-    })
-
-    const content = response.content[0]
-    if (content.type === "text") {
-      return { success: true, content: content.text }
+    let text: string
+    if (settings.provider === "anthropic") {
+      text = await callAnthropic(settings.apiKey, settings.model, systemPrompt, messages, maxTokens, temperature)
+    } else if (settings.provider === "grok") {
+      text = await callOpenAICompatible(settings.apiKey, settings.model, "https://api.x.ai/v1", systemPrompt, messages, maxTokens, temperature)
+    } else {
+      // openai or custom
+      text = await callOpenAICompatible(settings.apiKey, settings.model, "https://api.openai.com/v1", systemPrompt, messages, maxTokens, temperature)
     }
-    return { success: false, error: "Resposta inesperada da IA." }
+    return { success: true, content: text }
   } catch (err: any) {
     console.error("AI error:", err)
-    return { success: false, error: friendlyAIError(err) }
+    return { success: false, error: friendlyAIError(err, settings.provider) }
   }
 }
 
-function friendlyAIError(err: any): string {
-  const msg: string = err?.message || err?.error?.message || ""
+// ─── Error handling ───────────────────────────────────────────────────────────
+
+function friendlyAIError(err: any, provider = "anthropic"): string {
+  const msg: string = err?.message || err?.errorData?.error?.message || ""
+  const status: number = err?.status || 0
+
   if (msg.includes("credit balance is too low") || msg.includes("insufficient_quota")) {
-    return "Saldo insuficiente na conta Anthropic. Adicione créditos em console.anthropic.com/settings/billing."
+    return provider === "anthropic"
+      ? "Saldo insuficiente na conta Anthropic. Adicione créditos em console.anthropic.com/settings/billing."
+      : "Saldo insuficiente. Verifique o plano da sua conta."
   }
-  if (msg.includes("invalid x-api-key") || msg.includes("authentication_error") || err?.status === 401) {
+  if (status === 401 || msg.includes("invalid x-api-key") || msg.includes("authentication_error") || msg.includes("Incorrect API key")) {
     return "Chave de API inválida. Verifique a chave em Configurações › Integração de IA."
   }
-  if (msg.includes("rate_limit") || err?.status === 429) {
+  if (status === 429 || msg.includes("rate_limit") || msg.includes("Rate limit")) {
     return "Limite de requisições atingido. Tente novamente em alguns instantes."
   }
-  if (err?.status === 400) {
-    const detail = err?.error?.message || msg
-    if (detail.includes("credit")) {
-      return "Saldo insuficiente na conta Anthropic. Adicione créditos em console.anthropic.com/settings/billing."
-    }
+  if (status === 400 && msg.includes("credit")) {
+    return "Saldo insuficiente. Verifique o plano da sua conta."
   }
   return msg || "Erro ao comunicar com a IA."
 }
 
-/** Tests the AI connection with a simple message */
-export async function testAIConnection(apiKey: string, model: string): Promise<{ success: boolean; message: string }> {
+// ─── Test connection ──────────────────────────────────────────────────────────
+
+export async function testAIConnection(
+  apiKey: string, model: string, provider: string
+): Promise<{ success: boolean; message: string }> {
   try {
-    const client = new Anthropic({ apiKey })
-    const response = await client.messages.create({
-      model,
-      max_tokens: 32,
-      messages: [{ role: "user", content: "Diga apenas: ok" }],
-    })
-    const content = response.content[0]
-    if (content.type === "text") {
-      return { success: true, message: `Conexão OK! Modelo respondeu: "${content.text.trim()}"` }
+    let text: string
+    if (provider === "anthropic") {
+      text = await callAnthropic(apiKey, model, "Você é um assistente.", [{ role: "user", content: "Diga apenas: ok" }], 32, 0.1)
+    } else if (provider === "grok") {
+      text = await callOpenAICompatible(apiKey, model, "https://api.x.ai/v1", "Você é um assistente.", [{ role: "user", content: "Diga apenas: ok" }], 32, 0.1)
+    } else {
+      text = await callOpenAICompatible(apiKey, model, "https://api.openai.com/v1", "Você é um assistente.", [{ role: "user", content: "Diga apenas: ok" }], 32, 0.1)
     }
-    return { success: false, message: "Resposta inesperada da API." }
+    return { success: true, message: `Conexão OK! Modelo respondeu: "${text.trim()}"` }
   } catch (err: any) {
-    return { success: false, message: friendlyAIError(err) }
+    return { success: false, message: friendlyAIError(err, provider) }
   }
 }

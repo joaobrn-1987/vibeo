@@ -6,7 +6,7 @@ import { signOut } from "next-auth/react"
 import Link from "next/link"
 import {
   Settings, Mail, Lock, ToggleLeft, ToggleRight, Save, AlertTriangle,
-  Check, Eye, EyeOff, ArrowLeft, Zap, TestTube, Loader2, ExternalLink, Info
+  Check, Eye, EyeOff, ArrowLeft, Zap, TestTube, Loader2, ExternalLink, Info, Trash2
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,12 @@ const ANTHROPIC_MODELS = [
   { value: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5 – Rápido e econômico (recomendado)" },
   { value: "claude-sonnet-4-6", label: "Claude Sonnet 4.6 – Balanceado" },
   { value: "claude-opus-4-6", label: "Claude Opus 4.6 – Mais poderoso" },
+]
+
+const GROK_MODELS = [
+  { value: "grok-3-mini-beta", label: "Grok 3 Mini – Gratuito, rápido (recomendado)" },
+  { value: "grok-2-1212", label: "Grok 2 – Mais capaz" },
+  { value: "grok-3-beta", label: "Grok 3 – Mais avançado" },
 ]
 
 interface Props {
@@ -119,6 +125,24 @@ export function ConfiguracoesClient({
     setSmtpSaving(false)
   }
 
+  async function clearAI() {
+    if (!confirm("Limpar todas as configurações de integração de IA? A chave e o modelo serão removidos.")) return
+    setAiApiKey(""); setAiModel(""); setAiEnabled(false); setTestResult(null); setAiMsg(null)
+    await fetch("/api/admin/ia-integracao", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        settings: [
+          { key: "AI_ENABLED", value: "false" },
+          { key: "AI_API_KEY", value: "" },
+          { key: "AI_MODEL", value: "" },
+          { key: "AI_PROVIDER", value: "anthropic" },
+        ],
+      }),
+    })
+    setAiMsg({ ok: true, text: "Configurações de IA limpas." })
+    router.refresh()
+  }
+
   async function saveAI() {
     setAiSaving(true); setAiMsg(null)
     const res = await fetch("/api/admin/ia-integracao", {
@@ -146,7 +170,7 @@ export function ConfiguracoesClient({
     setTesting(true); setTestResult(null)
     const res = await fetch("/api/admin/ia-integracao", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "test", apiKey: aiApiKey, model: aiModel }),
+      body: JSON.stringify({ action: "test", apiKey: aiApiKey, model: aiModel, provider: aiProvider }),
     })
     const data = await res.json()
     setTestResult(data)
@@ -222,14 +246,19 @@ export function ConfiguracoesClient({
           {/* Provider */}
           <div>
             <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wide mb-2 block">Provedor</label>
-            <div className="grid grid-cols-2 gap-2">
-              {[{ value: "anthropic", label: "Anthropic (Claude)", recommended: true }, { value: "openai", label: "OpenAI (GPT)", recommended: false }].map((p) => (
-                <button key={p.value} onClick={() => setAiProvider(p.value)}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {[
+                { value: "anthropic", label: "Anthropic", sub: "Claude", recommended: false },
+                { value: "grok", label: "xAI", sub: "Grok · gratuito", recommended: true },
+                { value: "openai", label: "OpenAI", sub: "GPT", recommended: false },
+              ].map((p) => (
+                <button key={p.value} onClick={() => { setAiProvider(p.value); setAiModel("") }}
                   className={`p-3 rounded-xl border-2 text-left transition-all ${aiProvider === p.value ? "border-purple-400 bg-purple-50" : "border-cream-200 hover:border-purple-200"}`}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-foreground">{p.label}</span>
-                    {p.recommended && <span className="text-xs px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded-full">recomendado</span>}
+                  <div className="flex items-center justify-between gap-1 flex-wrap">
+                    <span className="text-sm font-semibold text-foreground">{p.label}</span>
+                    {p.recommended && <span className="text-xs px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full">grátis</span>}
                   </div>
+                  <p className="text-xs text-foreground/50 mt-0.5">{p.sub}</p>
                 </button>
               ))}
             </div>
@@ -238,12 +267,12 @@ export function ConfiguracoesClient({
           {/* API Key */}
           <div>
             <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wide mb-1.5 block">
-              {aiProvider === "anthropic" ? "Anthropic API Key" : "OpenAI API Key"}
+              {aiProvider === "anthropic" ? "Anthropic API Key" : aiProvider === "grok" ? "xAI API Key" : "OpenAI API Key"}
             </label>
             <div className="relative">
               <input type={showApiKey ? "text" : "password"} value={aiApiKey}
                 onChange={(e) => setAiApiKey(e.target.value)}
-                placeholder={aiProvider === "anthropic" ? "sk-ant-api03-..." : "sk-..."}
+                placeholder={aiProvider === "anthropic" ? "sk-ant-api03-..." : aiProvider === "grok" ? "xai-..." : "sk-..."}
                 className="w-full px-4 py-2.5 pr-10 rounded-xl border border-cream-200 bg-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-300" />
               <button type="button" onClick={() => setShowApiKey(!showApiKey)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/30 hover:text-foreground/60">
@@ -260,6 +289,12 @@ export function ConfiguracoesClient({
                     Obter chave <ExternalLink className="w-3 h-3" />
                   </a>
                 )}
+                {aiProvider === "grok" && (
+                  <a href="https://console.x.ai" target="_blank" rel="noopener noreferrer"
+                    className="ml-1 text-purple-500 hover:underline inline-flex items-center gap-0.5">
+                    Obter chave grátis <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
               </p>
             </div>
           </div>
@@ -271,7 +306,16 @@ export function ConfiguracoesClient({
               <div className="space-y-2">
                 {ANTHROPIC_MODELS.map((m) => (
                   <label key={m.value} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${aiModel === m.value ? "border-purple-300 bg-purple-50" : "border-cream-200 hover:border-purple-200"}`}>
-                    <input type="radio" name="aiModel" value={m.value} checked={aiModel === m.value} onChange={() => setAiModel(m.value)} className="text-purple-500 accent-purple-500" />
+                    <input type="radio" name="aiModel" value={m.value} checked={aiModel === m.value} onChange={() => setAiModel(m.value)} className="accent-purple-500" />
+                    <span className="text-sm text-foreground">{m.label}</span>
+                  </label>
+                ))}
+              </div>
+            ) : aiProvider === "grok" ? (
+              <div className="space-y-2">
+                {GROK_MODELS.map((m) => (
+                  <label key={m.value} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${aiModel === m.value ? "border-purple-300 bg-purple-50" : "border-cream-200 hover:border-purple-200"}`}>
+                    <input type="radio" name="aiModel" value={m.value} checked={aiModel === m.value} onChange={() => setAiModel(m.value)} className="accent-purple-500" />
                     <span className="text-sm text-foreground">{m.label}</span>
                   </label>
                 ))}
@@ -303,10 +347,16 @@ export function ConfiguracoesClient({
             </p>
           )}
 
-          <Button onClick={saveAI} disabled={aiSaving}>
-            {aiSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {aiSaving ? "Salvando..." : "Salvar integração de IA"}
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button onClick={saveAI} disabled={aiSaving}>
+              {aiSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {aiSaving ? "Salvando..." : "Salvar integração de IA"}
+            </Button>
+            <Button variant="outline" onClick={clearAI} className="text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200">
+              <Trash2 className="w-4 h-4" />
+              Limpar configurações
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
