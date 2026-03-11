@@ -399,21 +399,20 @@ export function ConfiguracoesClient({
         </CardContent>
       </Card>
 
-      {/* Master Admin Name */}
+      {/* Master Admin — Name + Password */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Settings className="w-5 h-5 text-primary-500" />
-            Nome do Master Admin
+            Conta Master Admin
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 space-y-6">
+          {/* Name */}
           <form onSubmit={saveName} className="space-y-3">
-            <div>
-              <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wide mb-1.5 block">Nome</label>
-              <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} minLength={2} required
-                className="w-full px-4 py-2.5 rounded-xl border border-cream-200 bg-white text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" />
-            </div>
+            <p className="text-xs font-semibold text-foreground/50 uppercase tracking-wide">Nome</p>
+            <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} minLength={2} required
+              className="w-full px-4 py-2.5 rounded-xl border border-cream-200 bg-white text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" />
             {nameMsg && (
               <p className={`text-sm px-4 py-2.5 rounded-xl flex items-center gap-2 ${nameMsg.ok ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
                 {nameMsg.ok ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
@@ -425,21 +424,14 @@ export function ConfiguracoesClient({
               {nameSaving ? "Salvando..." : "Salvar nome"}
             </Button>
           </form>
-        </CardContent>
-      </Card>
 
-      {/* Master Admin Password */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Lock className="w-5 h-5 text-primary-500" />
-            Alterar senha do Master Admin
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
+          <div className="border-t border-cream-100" />
+
+          {/* Password */}
           <form onSubmit={savePassword} className="space-y-3">
+            <p className="text-xs font-semibold text-foreground/50 uppercase tracking-wide">Alterar senha</p>
             <div>
-              <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wide mb-1.5 block">Senha atual</label>
+              <label className="text-xs text-foreground/50 mb-1 block">Senha atual</label>
               <div className="relative">
                 <input type={showPw ? "text" : "password"} value={pwForm.current} onChange={(e) => setPwForm({ ...pwForm, current: e.target.value })} required
                   className="w-full px-4 py-2.5 pr-10 rounded-xl border border-cream-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" />
@@ -450,12 +442,12 @@ export function ConfiguracoesClient({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wide mb-1.5 block">Nova senha</label>
+                <label className="text-xs text-foreground/50 mb-1 block">Nova senha</label>
                 <input type="password" value={pwForm.next} onChange={(e) => setPwForm({ ...pwForm, next: e.target.value })} minLength={8} required
                   className="w-full px-4 py-2.5 rounded-xl border border-cream-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" />
               </div>
               <div>
-                <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wide mb-1.5 block">Confirmar</label>
+                <label className="text-xs text-foreground/50 mb-1 block">Confirmar</label>
                 <input type="password" value={pwForm.confirm} onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })} required
                   className="w-full px-4 py-2.5 rounded-xl border border-cream-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-300" />
               </div>
