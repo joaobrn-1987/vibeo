@@ -90,6 +90,9 @@ export function ConfiguracoesClient({
   const [aiMsg, setAiMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [listingModels, setListingModels] = useState(false)
+  const [availableModels, setAvailableModels] = useState<string[] | null>(null)
+  const [listModelsError, setListModelsError] = useState<string | null>(null)
 
   async function saveSetting(key: string, value: string) {
     const res = await fetch("/api/admin/settings", {
@@ -202,6 +205,19 @@ export function ConfiguracoesClient({
       setAiMsg({ ok: false, text: "Erro ao salvar." })
     }
     setAiSaving(false)
+  }
+
+  async function listModels() {
+    if (!aiApiKey.trim()) { setListModelsError("Insira a chave de API primeiro."); return }
+    setListingModels(true); setAvailableModels(null); setListModelsError(null)
+    const res = await fetch("/api/admin/ia-integracao", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "list_models", apiKey: aiApiKey, provider: aiProvider }),
+    })
+    const data = await res.json()
+    if (!res.ok || data.error) { setListModelsError(data.error || "Erro ao listar modelos.") }
+    else { setAvailableModels(data.models || []) }
+    setListingModels(false)
   }
 
   async function testAI() {
@@ -358,12 +374,28 @@ export function ConfiguracoesClient({
                     <span className="text-sm text-foreground">{m.label}</span>
                   </label>
                 ))}
-                <div className="pt-1">
-                  <p className="text-xs text-foreground/40 mb-1">Ou digite o ID exato do modelo (conforme aparece na documentação da xAI):</p>
+                <div className="pt-1 space-y-2">
+                  <p className="text-xs text-foreground/40">Ou digite o ID exato do modelo:</p>
                   <input type="text" value={GROK_MODELS.some(m => m.value === aiModel) ? "" : aiModel}
                     onChange={(e) => setAiModel(e.target.value)}
                     placeholder="ex: grok-3-mini-beta"
                     className="w-full px-4 py-2.5 rounded-xl border border-cream-200 bg-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-300" />
+                  <Button type="button" variant="outline" size="sm" onClick={listModels} disabled={listingModels || !aiApiKey.trim()}>
+                    {listingModels ? <><Loader2 className="w-4 h-4 animate-spin" /> Consultando...</> : "Ver modelos disponíveis na minha conta"}
+                  </Button>
+                  {listModelsError && <p className="text-xs text-red-500">{listModelsError}</p>}
+                  {availableModels && (
+                    <div className="bg-cream-50 border border-cream-200 rounded-xl p-3 space-y-1">
+                      <p className="text-xs font-semibold text-foreground/50 mb-2">Modelos disponíveis ({availableModels.length}):</p>
+                      {availableModels.length === 0 && <p className="text-xs text-foreground/40">Nenhum modelo encontrado.</p>}
+                      {availableModels.map((m) => (
+                        <button key={m} onClick={() => setAiModel(m)}
+                          className={`block w-full text-left px-3 py-1.5 rounded-lg text-xs font-mono transition-colors ${aiModel === m ? "bg-purple-100 text-purple-700" : "hover:bg-cream-200 text-foreground/70"}`}>
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (

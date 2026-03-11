@@ -63,9 +63,25 @@ export async function POST(req: NextRequest) {
   }
 
   const { apiKey, model, provider, action } = await req.json()
-  if (action !== "test" || !apiKey) {
-    return NextResponse.json({ error: "Dados inválidos." }, { status: 400 })
+  if (!apiKey) return NextResponse.json({ error: "Dados inválidos." }, { status: 400 })
+
+  // List available models for grok/openai
+  if (action === "list_models") {
+    const baseUrl = provider === "grok" ? "https://api.x.ai/v1" : "https://api.openai.com/v1"
+    try {
+      const res = await fetch(`${baseUrl}/models`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      })
+      const data = await res.json()
+      if (!res.ok) return NextResponse.json({ error: data?.error?.message || `HTTP ${res.status}` }, { status: res.status })
+      const models = (data.data || []).map((m: any) => m.id).sort()
+      return NextResponse.json({ models })
+    } catch (e: any) {
+      return NextResponse.json({ error: e.message || "Erro ao listar modelos." }, { status: 500 })
+    }
   }
+
+  if (action !== "test") return NextResponse.json({ error: "Dados inválidos." }, { status: 400 })
 
   const resolvedProvider = provider || "anthropic"
   const defaultModels: Record<string, string> = {
