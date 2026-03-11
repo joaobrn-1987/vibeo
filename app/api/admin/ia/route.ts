@@ -18,13 +18,18 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Acesso negado." }, { status: 403 })
   }
 
-  const { key, value, description } = await req.json()
+  const { key, value, description, isActive } = await req.json()
   if (!key) return NextResponse.json({ error: "key obrigatório." }, { status: 400 })
+
+  const updateData: Record<string, any> = {}
+  if (value !== undefined) updateData.value = value
+  if (description !== undefined) updateData.description = description
+  if (isActive !== undefined) updateData.isActive = isActive
 
   const config = await prisma.aIConfiguration.upsert({
     where: { key },
-    update: { value, ...(description ? { description } : {}) },
-    create: { key, value: value || "", description, isActive: true },
+    update: updateData,
+    create: { key, value: value || "", description, isActive: isActive !== undefined ? isActive : true },
   })
 
   await prisma.auditLog.create({

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, Save, Loader2, Brain, X, Pencil, ToggleLeft, ToggleRight } from "lucide-react"
+import { Plus, Save, Loader2, Brain, X, Pencil, ToggleLeft, ToggleRight, Info } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
@@ -42,6 +42,17 @@ export function IAClient({ configs: initial }: { configs: Config[] }) {
       router.refresh()
     }
     setSaving(null)
+  }
+
+  async function toggleActive(cfg: Config) {
+    const res = await fetch("/api/admin/ia", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: cfg.key, isActive: !cfg.isActive }),
+    })
+    if (res.ok) {
+      setConfigs((prev) => prev.map((c) => c.key === cfg.key ? { ...c, isActive: !cfg.isActive } : c))
+    }
   }
 
   async function handleAdd() {
@@ -91,6 +102,12 @@ export function IAClient({ configs: initial }: { configs: Config[] }) {
 
   return (
     <div className="space-y-6">
+      {/* Info banner */}
+      <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-700">
+        <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+        <p>Estas regras são consultadas pela assistente Vibe ao responder os usuários. Desative as que não deseja usar como parâmetro.</p>
+      </div>
+
       {missingDefaults.length > 0 && (
         <Card className="border-blue-200 bg-blue-50/30">
           <CardContent className="p-4">
@@ -188,20 +205,34 @@ export function IAClient({ configs: initial }: { configs: Config[] }) {
               ) : (
                 <div className="flex items-start gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-sm font-semibold text-foreground">{cfg.key}</span>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`font-mono text-sm font-semibold ${cfg.isActive ? "text-foreground" : "text-foreground/40"}`}>{cfg.key}</span>
+                      {!cfg.isActive && (
+                        <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full">Desativado — não usado pela IA</span>
+                      )}
                     </div>
                     {cfg.description && <p className="text-xs text-foreground/50 mt-0.5">{cfg.description}</p>}
-                    <div className="mt-2 bg-cream-50 rounded-lg px-3 py-2">
+                    <div className={`mt-2 rounded-lg px-3 py-2 ${cfg.isActive ? "bg-cream-50" : "bg-gray-50 opacity-50"}`}>
                       <p className="text-sm font-mono text-foreground/70 whitespace-pre-wrap break-all">{cfg.value}</p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => { setEditing(cfg.key); setEditValue(cfg.value) }}
-                    className="p-2 rounded-lg hover:bg-cream-100 transition-colors flex-shrink-0"
-                  >
-                    <Pencil className="w-4 h-4 text-foreground/50" />
-                  </button>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => toggleActive(cfg)}
+                      title={cfg.isActive ? "Desativar esta regra" : "Ativar esta regra"}
+                      className="p-2 rounded-lg hover:bg-cream-100 transition-colors"
+                    >
+                      {cfg.isActive
+                        ? <ToggleRight className="w-5 h-5 text-green-500" />
+                        : <ToggleLeft className="w-5 h-5 text-foreground/30" />}
+                    </button>
+                    <button
+                      onClick={() => { setEditing(cfg.key); setEditValue(cfg.value) }}
+                      className="p-2 rounded-lg hover:bg-cream-100 transition-colors"
+                    >
+                      <Pencil className="w-4 h-4 text-foreground/50" />
+                    </button>
+                  </div>
                 </div>
               )}
             </CardContent>
