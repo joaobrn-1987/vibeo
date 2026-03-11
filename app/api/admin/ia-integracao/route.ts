@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
 
   const resolvedProvider = provider || "gemini"
   const defaultModels: Record<string, string> = {
-    gemini: "gemini-2.0-flash",
+    gemini: "gemini-2.5-flash-lite",
     anthropic: "claude-haiku-4-5-20251001",
     openai: "gpt-4o-mini",
   }

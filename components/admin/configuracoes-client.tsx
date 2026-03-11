@@ -18,9 +18,10 @@ const ANTHROPIC_MODELS = [
 ]
 
 const GEMINI_MODELS = [
-  { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash – Rápido e gratuito (recomendado)" },
-  { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash – Rápido e gratuito" },
-  { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro – Mais capaz" },
+  { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite – Rápido e gratuito (recomendado)" },
+  { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash – Mais capaz, gratuito" },
+  { value: "gemini-2.0-flash-lite", label: "Gemini 2.0 Flash Lite – Gratuito" },
+  { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash – Gratuito (cota limitada)" },
 ]
 
 interface Props {
@@ -169,7 +170,7 @@ export function ConfiguracoesClient({
 
   async function clearAI() {
     if (!confirm("Limpar todas as configurações de integração de IA? A chave e o modelo serão removidos.")) return
-    setAiApiKey(""); setAiModel("gemini-2.0-flash"); setAiProvider("gemini"); setAiEnabled(false); setTestResult(null); setAiMsg(null); setAvailableModels(null)
+    setAiApiKey(""); setAiModel("gemini-2.5-flash-lite"); setAiProvider("gemini"); setAiEnabled(false); setTestResult(null); setAiMsg(null); setAvailableModels(null)
     await fetch("/api/admin/ia-integracao", {
       method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -303,7 +304,7 @@ export function ConfiguracoesClient({
             <label className="text-xs font-semibold text-foreground/50 uppercase tracking-wide mb-2 block">Provedor</label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[
-                { value: "gemini", label: "Google Gemini", sub: "Gratuito · aistudio.google.com", free: true, defaultModel: "gemini-2.0-flash" },
+                { value: "gemini", label: "Google Gemini", sub: "Gratuito · aistudio.google.com", free: true, defaultModel: "gemini-2.5-flash-lite" },
                 { value: "openai", label: "OpenAI", sub: "GPT · pago", free: false, defaultModel: "gpt-4o-mini" },
               ].map((p) => (
                 <button key={p.value} onClick={() => { setAiProvider(p.value); setAiModel(p.defaultModel); setAvailableModels(null) }}
