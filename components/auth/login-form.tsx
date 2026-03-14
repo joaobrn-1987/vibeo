@@ -1,7 +1,7 @@
 "use client"
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -25,7 +25,6 @@ const errorMessages: Record<string, string> = {
 }
 
 export function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -45,8 +44,8 @@ export function LoginForm() {
       if (result?.error) {
         setError(errorMessages[result.error] || "Ocorreu um erro. Tente novamente.")
       } else {
-        router.push("/dashboard")
-        router.refresh()
+        const callbackUrl = searchParams.get("callbackUrl")
+        window.location.href = callbackUrl || "/dashboard"
       }
     } catch {
       setError("Ocorreu um erro inesperado.")

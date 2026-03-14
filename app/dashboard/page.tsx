@@ -9,6 +9,7 @@ export const metadata = { title: "Início" }
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
   if (!session) redirect("/login")
+  if (session.user.role === "ADMIN" || session.user.role === "MASTER_ADMIN") redirect("/admin")
 
   const [user, aiSetting] = await Promise.all([
     prisma.user.findUnique({
